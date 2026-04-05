@@ -83,7 +83,7 @@ html, body {
   grid-template-columns: repeat(8, 1fr);
   grid-template-rows: repeat(8, 1fr);
   aspect-ratio: 1;
-  height: min(88vh, calc(200vw / 3 - 24px));
+  height: min(calc(100vh - 40px), calc(200vw / 3 - 24px));
 }
 
 .square {
