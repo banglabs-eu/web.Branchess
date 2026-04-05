@@ -118,7 +118,6 @@ export class TreeView {
         return;
       }
       this._lastClickTime = now;
-      if (!this._fullscreen) return; // Only allow panning in fullscreen
       this._dragging = true;
       this._dragStart = { x: e.clientX, y: e.clientY };
       this._dragScrollStart = { x: this.state.treeScrollX, y: this.state.treeScrollY };
