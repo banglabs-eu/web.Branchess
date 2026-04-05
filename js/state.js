@@ -24,6 +24,7 @@ export class GameState extends EventEmitter {
     this.playerColor = 'w';
     this.versusMode = false; // 90° rotated board for 2 humans
     this.enginePaused = false; // When true, engine won't auto-respond
+    this.bestMoveHint = null; // {from, to, score} — shown by "Best Move" button
 
     // Selection / UI
     this.selectedSq = null;
@@ -86,6 +87,7 @@ export class GameState extends EventEmitter {
     this.lastMove = node.move; // {from, to} or null
     this.selectedSq = null;
     this.legalDests = new Set();
+    this.bestMoveHint = null;
     this.gameOver = false;
     this.checkGameOver();
     if (!this.gameOver) {
@@ -159,6 +161,7 @@ export class GameState extends EventEmitter {
     this.lastMove = null;
     this.selectedSq = null;
     this.legalDests = new Set();
+    this.bestMoveHint = null;
     this.gameOver = false;
     this.status = this.chess.turn() === 'w' ? 'Your turn' : 'Black to move';
     this.emit('boardChanged');

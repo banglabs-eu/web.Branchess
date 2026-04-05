@@ -111,6 +111,12 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
+// Restore theme
+if (localStorage.getItem('branchess-theme') === 'banglabs') {
+  document.documentElement.classList.add('theme-banglabs');
+  uiPanel.themeBtn.textContent = 'Theme: Bang Labs';
+}
+
 // Initial render
 boardView.render();
 treeView.render();

@@ -85,6 +85,7 @@ export class UIPanel {
       this.pauseEngineBtn.textContent = this.state.enginePaused ? 'Resume Engine' : 'Pause Engine';
     }, 'half');
     engineSection.appendChild(engineRow);
+    this._addBtn(engineSection, 'Best Move', () => this.moveHandler.showBestMove());
     this.versusBtn = this._addBtn(engineSection, '2P Mode', () => {
       this.state.toggleVersusMode();
       this.versusBtn.textContent = this.state.versusMode ? '1P Mode' : '2P Mode';
@@ -105,7 +106,10 @@ export class UIPanel {
 
     // --- Import & Export ---
     const ioSection = this._section('Import & Export');
-    this._addBtn(ioSection, 'Paste PGN', () => this._pastePGN());
+    const importRow = this._btnRow();
+    this._addBtn(importRow, 'Paste PGN', () => this._pastePGN(), 'half');
+    this._addBtn(importRow, 'Load Lichess', () => this._loadLichess(), 'half');
+    ioSection.appendChild(importRow);
     this._addBtn(ioSection, 'Share Position', () => this._sharePosition());
     const mermaidRow = this._btnRow();
     this._addBtn(mermaidRow, 'Export Mermaid', () => this._exportMermaid(), 'half');
@@ -117,6 +121,7 @@ export class UIPanel {
     const boardSection = this._section('Board');
     this._addBtn(boardSection, 'Setup Board', () => this._enterSetupMode());
     this._addBtn(boardSection, 'New Game', () => this.state.newGame());
+    this.themeBtn = this._addBtn(boardSection, 'Theme: Classic', () => this._toggleTheme());
     btnArea.appendChild(boardSection);
 
     this.container.appendChild(btnArea);
@@ -334,6 +339,36 @@ export class UIPanel {
     }
     state.emit('boardChanged');
     state.emit('treeChanged');
+  }
+
+  async _loadLichess() {
+    if (this.state.engineThinking) return;
+    const input = window.prompt('Paste a Lichess game URL or ID:');
+    if (!input) return;
+
+    // Extract game ID: last path segment, first 8 chars
+    const match = input.trim().match(/([a-zA-Z0-9]{8})/);
+    if (!match) {
+      this.state.status = 'Invalid Lichess URL or game ID';
+      this.state.emit('boardChanged');
+      return;
+    }
+    const gameId = match[1];
+
+    this.state.status = 'Loading from Lichess...';
+    this.state.emit('boardChanged');
+
+    try {
+      const resp = await fetch(`https://lichess.org/game/export/${gameId}`, {
+        headers: { 'Accept': 'application/x-chess-pgn' }
+      });
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const pgn = await resp.text();
+      this._importPGN(pgn);
+    } catch (err) {
+      this.state.status = `Lichess error: ${err.message}`;
+      this.state.emit('boardChanged');
+    }
   }
 
   async _pastePGN() {
@@ -561,6 +596,12 @@ export class UIPanel {
     state.status = 'Mermaid game loaded';
     state.emit('boardChanged');
     state.emit('treeChanged');
+  }
+
+  _toggleTheme() {
+    const isBangLabs = document.documentElement.classList.toggle('theme-banglabs');
+    this.themeBtn.textContent = isBangLabs ? 'Theme: Bang Labs' : 'Theme: Classic';
+    localStorage.setItem('branchess-theme', isBangLabs ? 'banglabs' : 'classic');
   }
 
   _enterSetupMode() {

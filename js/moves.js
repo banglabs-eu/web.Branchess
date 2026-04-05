@@ -383,6 +383,40 @@ export class MoveHandler {
     });
   }
 
+  async showBestMove() {
+    const state = this.state;
+    if (state.engineThinking || state.gameOver) return;
+    if (!state.chess.moves().length) return;
+
+    state.engineThinking = true;
+    state.status = 'Analyzing...';
+    state.emit('boardChanged');
+
+    try {
+      const result = await this.engine.analyze(state.chess.fen());
+      if (!result) {
+        state.status = 'No analysis available';
+      } else {
+        state.bestMoveHint = { from: result.move.from, to: result.move.to };
+        // Format score
+        const score = result.score;
+        if (Math.abs(score) >= 10000) {
+          const mateIn = Math.ceil((10000 - Math.abs(score % 10000)) || 1);
+          state.status = `Best: ${result.move.from}${result.move.to} — Mate in ${mateIn}`;
+        } else {
+          const eval_ = (score / 100).toFixed(1);
+          const sign = score >= 0 ? '+' : '';
+          state.status = `Best: ${result.move.from}${result.move.to} — Eval: ${sign}${eval_}`;
+        }
+      }
+    } catch {
+      state.status = 'Analysis failed';
+    }
+
+    state.engineThinking = false;
+    state.emit('boardChanged');
+  }
+
   requestEngineCalculation() {
     if (this.state.gameOver) return;
     const moves = this.state.chess.moves();

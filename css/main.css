@@ -12,11 +12,28 @@
   --btn-hover: #646464;
   --btn-text: #e6e6e6;
   --btn-active: #3c7850;
+  --sq-light: #f0d9b5;
+  --sq-dark: #b58863;
+  --body-bg: #1a3a2a;
+}
+
+html.theme-banglabs, html.theme-banglabs #app {
+  --bg: #0a0a0f;
+  --panel-bg: #0f0f19;
+  --text: #e0e0e8;
+  --text-dim: #9ca3b0;
+  --btn: #1a1a2e;
+  --btn-hover: #2a2a44;
+  --btn-text: #c7d2fe;
+  --btn-active: #6366f1;
+  --sq-light: #2a2a3e;
+  --sq-dark: #1a1a2e;
+  --body-bg: #050510;
 }
 
 html, body {
   height: 100%;
-  background: #1a3a2a;
+  background: var(--body-bg);
   color: var(--text);
   font-family: 'Inter', system-ui, sans-serif;
   overflow: hidden;
@@ -87,6 +104,9 @@ html, body {
   height: var(--board-size);
 }
 
+.sq-light { background: var(--sq-light); }
+.sq-dark { background: var(--sq-dark); }
+
 .square {
   position: relative;
   display: flex;
@@ -150,6 +170,15 @@ html, body {
   position: absolute;
   inset: 0;
   background: rgba(235,64,52,0.63);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.highlight-best::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(80,140,240,0.55);
   pointer-events: none;
   z-index: 1;
 }

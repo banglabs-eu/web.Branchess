@@ -55,7 +55,7 @@ export class BoardView {
           const file = vFiles[row];
           const rank = String(vRanks[col]);
           const isLight = (row + col) % 2 === 0;
-          sq.style.background = isLight ? COLOR_LIGHT_SQ : COLOR_DARK_SQ;
+          sq.classList.add(isLight ? 'sq-light' : 'sq-dark');
           sq.dataset.square = file + rank;
           sq.dataset.row = row;
           sq.dataset.col = col;
@@ -88,7 +88,7 @@ export class BoardView {
           const sq = document.createElement('div');
           sq.className = 'square';
           const isLight = (row + col) % 2 === 0;
-          sq.style.background = isLight ? COLOR_LIGHT_SQ : COLOR_DARK_SQ;
+          sq.classList.add(isLight ? 'sq-light' : 'sq-dark');
           sq.dataset.square = files[col] + ranks[row];
           sq.dataset.row = row;
           sq.dataset.col = col;
@@ -124,7 +124,7 @@ export class BoardView {
       // Remove piece spans and overlays
       const piece = sq.querySelector('.piece');
       if (piece) piece.remove();
-      sq.classList.remove('highlight-selected', 'highlight-legal', 'highlight-last', 'highlight-check', 'highlight-legal-capture');
+      sq.classList.remove('highlight-selected', 'highlight-legal', 'highlight-last', 'highlight-check', 'highlight-legal-capture', 'highlight-best');
     }
 
     // Place pieces
@@ -190,6 +190,14 @@ export class BoardView {
     if (selectedSq !== null) {
       const idx = this._sqIndex(selectedSq);
       this.squares[idx].classList.add('highlight-selected');
+    }
+
+    // Best move hint
+    if (this.state.bestMoveHint) {
+      const fromIdx = this._sqIndex(this.state.bestMoveHint.from);
+      const toIdx = this._sqIndex(this.state.bestMoveHint.to);
+      this.squares[fromIdx].classList.add('highlight-best');
+      this.squares[toIdx].classList.add('highlight-best');
     }
 
     for (const dest of legalDests) {

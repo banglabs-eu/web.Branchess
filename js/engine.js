@@ -162,6 +162,37 @@ export class StochasticEngine {
     return candidates[candidates.length - 1];
   }
 
+  async analyze(fen) {
+    await this._readyPromise;
+
+    // Use max strength for analysis
+    this._send('setoption name Skill Level value 20');
+    this._send(`position fen ${fen}`);
+    this._send('go movetime 1500');
+
+    const lines = await new Promise(r => {
+      this._analysisResolve = r;
+      this._analysisLines = [];
+    });
+
+    // Restore previous skill level on next getMove call
+    this._currentStrength = null;
+
+    if (!lines.length) return null;
+
+    const byMove = new Map();
+    for (const l of lines) {
+      const existing = byMove.get(l.move);
+      if (!existing || (l.multipv && (!existing.multipv || l.multipv >= existing.multipv))) {
+        byMove.set(l.move, l);
+      }
+    }
+    const best = [...byMove.values()].sort((a, b) => b.score - a.score)[0];
+    if (!best) return null;
+
+    return { move: this._uciToMove(best.move), score: best.score };
+  }
+
   _uciToMove(uci) {
     const from = uci.substring(0, 2);
     const to = uci.substring(2, 4);
