@@ -103,12 +103,7 @@ export class UIPanel {
 
   _buildSlider() {
     this.sliderArea.innerHTML = '';
-    const { elo } = this.state.strengthParams();
-
-    this.sliderLabel = document.createElement('div');
-    this.sliderLabel.className = 'slider-label';
-    this.sliderLabel.textContent = `Engine: ~${elo} ELO`;
-    this.sliderArea.appendChild(this.sliderLabel);
+    this._updateSliderLabel();
 
     this.slider = document.createElement('input');
     this.slider.type = 'range';
@@ -119,13 +114,25 @@ export class UIPanel {
 
     this.slider.addEventListener('input', () => {
       this.state.strength = parseInt(this.slider.value);
-      const { elo } = this.state.strengthParams();
-      this.sliderLabel.textContent = `Engine: ~${elo} ELO`;
+      this._updateSliderLabel();
       this._updateSliderTrack();
     });
 
     this.sliderArea.appendChild(this.slider);
     this._updateSliderTrack();
+  }
+
+  _updateSliderLabel() {
+    const p = this.state.strengthParams();
+    const tempStr = p.temperature > 0 ? p.temperature.toFixed(1) : 'off';
+    const text = `Skill ${p.skill}/20 | Think ${p.thinkTime}ms | Temp ${tempStr}`;
+
+    if (!this.sliderLabel) {
+      this.sliderLabel = document.createElement('div');
+      this.sliderLabel.className = 'slider-label';
+      this.sliderArea.appendChild(this.sliderLabel);
+    }
+    this.sliderLabel.textContent = text;
   }
 
   _updateSliderTrack() {

@@ -145,9 +145,7 @@ export class GameState extends EventEmitter {
     // Temperature: only affects low settings, near-zero above 50%
     const temperature = t < 0.5 ? 2.0 * Math.pow(1 - t * 2, 1.5) : 0;
     const thinkTime = Math.round(50 + t * t * 2000); // ms
-    // Honest ELO: Stockfish WASM skill 0=~800, skill 20=~3000+
-    const elo = Math.round(800 + t * 2200);
-    return { skill, temperature, thinkTime, elo };
+    return { skill, temperature, thinkTime };
   }
 
   resetTree(fen) {
