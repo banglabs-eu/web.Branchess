@@ -20,6 +20,10 @@ export class GameState extends EventEmitter {
     this._treeLayoutDirty = true;
     this._cachedLayout = {};
 
+    // Board orientation: 'w' = white on bottom, 'b' = black on bottom
+    this.playerColor = 'w';
+    this.versusMode = false; // 90° rotated board for 2 humans
+
     // Selection / UI
     this.selectedSq = null;
     this.legalDests = new Set();
@@ -92,18 +96,12 @@ export class GameState extends EventEmitter {
 
   goBack() {
     if (this.engineThinking || !this.currentNode.parent) return;
-    let node = this.currentNode;
-    for (let i = 0; i < 2; i++) {
-      if (node.parent) node = node.parent;
-    }
-    this.navigateTo(node);
+    this.navigateTo(this.currentNode.parent);
   }
 
   goForward() {
     if (this.engineThinking || !this.currentNode.children.length) return;
-    let node = this.currentNode.children[0];
-    if (node.children.length) node = node.children[0];
-    this.navigateTo(node);
+    this.navigateTo(this.currentNode.children[0]);
   }
 
   switchBranch(direction) {
@@ -170,5 +168,19 @@ export class GameState extends EventEmitter {
     if (this.engineThinking) return;
     this.chess.reset();
     this.resetTree(STARTING_FEN);
+  }
+
+  flipBoard() {
+    this.playerColor = this.playerColor === 'w' ? 'b' : 'w';
+    this.versusMode = false;
+    this.emit('boardFlipped');
+    this.emit('boardChanged');
+  }
+
+  toggleVersusMode() {
+    this.versusMode = !this.versusMode;
+    this.playerColor = 'w'; // Reset to white on left
+    this.emit('boardFlipped');
+    this.emit('boardChanged');
   }
 }

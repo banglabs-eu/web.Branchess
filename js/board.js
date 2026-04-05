@@ -10,48 +10,115 @@ export class BoardView {
     this._build();
 
     state.on('boardChanged', () => this.render());
+    state.on('boardFlipped', () => { this._build(); this.render(); });
   }
 
   _build() {
     this.container.innerHTML = '';
     this.container.classList.add('chess-board');
+    this.squares = [];
 
-    for (let row = 0; row < 8; row++) {
+    const flipped = this.state.playerColor === 'b';
+    const versus = this.state.versusMode;
+
+    const topLabels = document.getElementById('file-labels-top');
+    const bottomLabels = document.getElementById('file-labels-bottom');
+    topLabels.innerHTML = '';
+    bottomLabels.innerHTML = '';
+
+    if (versus) {
+      // 90° rotation: rows = ranks (1-8 left to right), cols = files (a-h top to bottom)
+      // White on left (rank 1-2), Black on right (rank 7-8)
+      // Grid row = file index (a=top, h=bottom), Grid col = rank (1=left, 8=right)
+      // Top/bottom labels show ranks 1-8
       for (let col = 0; col < 8; col++) {
-        const sq = document.createElement('div');
-        sq.className = 'square';
-        const isLight = (row + col) % 2 === 0;
-        sq.style.background = isLight ? COLOR_LIGHT_SQ : COLOR_DARK_SQ;
-        sq.dataset.square = FILES[col] + RANKS[row];
-        sq.dataset.row = row;
-        sq.dataset.col = col;
+        const tl = document.createElement('span');
+        tl.textContent = String(col + 1);
+        topLabels.appendChild(tl);
+        const bl = document.createElement('span');
+        bl.textContent = String(col + 1);
+        bottomLabels.appendChild(bl);
+      }
 
-        // File labels (bottom row)
-        if (row === 7) {
-          const label = document.createElement('span');
-          label.className = 'label label-file';
-          label.textContent = FILES[col];
-          label.style.color = isLight ? COLOR_DARK_SQ : COLOR_LIGHT_SQ;
-          sq.appendChild(label);
-        }
-        // Rank labels (left column)
-        if (col === 0) {
-          const label = document.createElement('span');
-          label.className = 'label label-rank';
-          label.textContent = RANKS[row];
-          label.style.color = isLight ? COLOR_DARK_SQ : COLOR_LIGHT_SQ;
-          sq.appendChild(label);
-        }
+      for (let row = 0; row < 8; row++) {
+        for (let col = 0; col < 8; col++) {
+          const sq = document.createElement('div');
+          sq.className = 'square';
+          // file = row (a=0 at top), rank = col+1 (1 at left)
+          const file = FILES[row];
+          const rank = String(col + 1);
+          const isLight = (row + col) % 2 === 0;
+          sq.style.background = isLight ? COLOR_LIGHT_SQ : COLOR_DARK_SQ;
+          sq.dataset.square = file + rank;
+          sq.dataset.row = row;
+          sq.dataset.col = col;
 
-        this.squares.push(sq);
-        this.container.appendChild(sq);
+          // File labels (left column)
+          if (col === 0) {
+            const label = document.createElement('span');
+            label.className = 'label label-rank';
+            label.textContent = file.toUpperCase();
+            label.style.color = isLight ? COLOR_DARK_SQ : COLOR_LIGHT_SQ;
+            sq.appendChild(label);
+          }
+
+          this.squares.push(sq);
+          this.container.appendChild(sq);
+        }
+      }
+    } else {
+      // Normal or flipped
+      const files = flipped ? [...FILES].reverse().join('') : FILES;
+      const ranks = flipped ? [...RANKS].reverse().join('') : RANKS;
+
+      for (let col = 0; col < 8; col++) {
+        const tl = document.createElement('span');
+        tl.textContent = files[col].toUpperCase();
+        topLabels.appendChild(tl);
+        const bl = document.createElement('span');
+        bl.textContent = files[col].toUpperCase();
+        bottomLabels.appendChild(bl);
+      }
+
+      for (let row = 0; row < 8; row++) {
+        for (let col = 0; col < 8; col++) {
+          const sq = document.createElement('div');
+          sq.className = 'square';
+          const isLight = (row + col) % 2 === 0;
+          sq.style.background = isLight ? COLOR_LIGHT_SQ : COLOR_DARK_SQ;
+          sq.dataset.square = files[col] + ranks[row];
+          sq.dataset.row = row;
+          sq.dataset.col = col;
+
+          // Rank labels (left column)
+          if (col === 0) {
+            const label = document.createElement('span');
+            label.className = 'label label-rank';
+            label.textContent = ranks[row];
+            label.style.color = isLight ? COLOR_DARK_SQ : COLOR_LIGHT_SQ;
+            sq.appendChild(label);
+          }
+
+          this.squares.push(sq);
+          this.container.appendChild(sq);
+        }
       }
     }
   }
 
   _sqIndex(algebraic) {
-    const col = algebraic.charCodeAt(0) - 97; // a=0
-    const row = 8 - parseInt(algebraic[1]);    // 8=0, 1=7
+    const flipped = this.state.playerColor === 'b';
+    const versus = this.state.versusMode;
+    const col = algebraic.charCodeAt(0) - 97; // a=0, file
+    const row = 8 - parseInt(algebraic[1]);    // 8=0, 1=7, rank inverted
+
+    if (versus) {
+      // Grid row = file (a=0 at top), Grid col = rank-1 (1=0 at left)
+      const gridRow = col;            // file a=0 at top
+      const gridCol = parseInt(algebraic[1]) - 1; // rank 1=0 at left
+      return gridRow * 8 + gridCol;
+    }
+    if (flipped) return (7 - row) * 8 + (7 - col);
     return row * 8 + col;
   }
 
@@ -68,11 +135,29 @@ export class BoardView {
     }
 
     // Place pieces
+    const flipped = this.state.playerColor === 'b';
+    const versus = this.state.versusMode;
     for (let row = 0; row < 8; row++) {
       for (let col = 0; col < 8; col++) {
         const p = board[row][col];
         if (!p) continue;
-        const sq = this.squares[row * 8 + col];
+        let idx;
+        if (versus) {
+          // board[row][col]: row=0 is rank 8, col=0 is file a
+          // grid: gridRow=file(col), gridCol=rank(7-row) → rank 8=left? No, rank 1=left
+          // board row 0 = rank 8, board row 7 = rank 1
+          // grid col = rank-1 = 7-row (so rank 8 → col 7, rank 1 → col 0... wait)
+          // We want rank 1 on left (gridCol 0) and rank 8 on right (gridCol 7)
+          // board row 0 = rank 8 → gridCol 7, board row 7 = rank 1 → gridCol 0
+          const gridRow = col;        // file a=0 at top
+          const gridCol = 7 - row;    // rank 1=left(0), rank 8=right(7)
+          idx = gridRow * 8 + gridCol;
+        } else if (flipped) {
+          idx = (7 - row) * 8 + (7 - col);
+        } else {
+          idx = row * 8 + col;
+        }
+        const sq = this.squares[idx];
         const span = document.createElement('span');
         span.className = 'piece';
         // Always use filled (black) glyphs — color via CSS
@@ -100,7 +185,11 @@ export class BoardView {
         for (let col = 0; col < 8; col++) {
           const p = board[row][col];
           if (p && p.type === 'k' && p.color === turn) {
-            this.squares[row * 8 + col].classList.add('highlight-check');
+            let ki;
+            if (versus) { ki = col * 8 + (7 - row); }
+            else if (flipped) { ki = (7 - row) * 8 + (7 - col); }
+            else { ki = row * 8 + col; }
+            this.squares[ki].classList.add('highlight-check');
           }
         }
       }

@@ -36,9 +36,9 @@ export const COLOR_TREE_LABEL_DIM = '#6e6e64';
 
 // Layout
 export const ANIM_DURATION = 180; // ms
-export const TREE_SPACING_X = 36;
-export const TREE_SPACING_Y = 32;
-export const TREE_NODE_R = 7;
+export const TREE_SPACING_X = 80;
+export const TREE_SPACING_Y = 48;
+export const TREE_NODE_R = 11;
 
 // Unicode pieces
 export const UNICODE_PIECES = {

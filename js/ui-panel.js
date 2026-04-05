@@ -59,6 +59,10 @@ export class UIPanel {
     btnArea.appendChild(row2);
 
     // Full-width buttons
+    this._addBtn(btnArea, 'Flip Board', () => this.state.flipBoard());
+    this._addBtn(btnArea, '2P Mode', () => this.state.toggleVersusMode());
+    this._addBtn(btnArea, 'Share Position', () => this._sharePosition());
+    this._addBtn(btnArea, 'Export Mermaid', () => this._exportMermaid());
     this._addBtn(btnArea, 'Save Position', () => this._openSaveDialog());
     this._addBtn(btnArea, 'Load Position', () => this._openLoadDialog());
     this._addBtn(btnArea, 'Setup Board', () => this._enterSetupMode());
@@ -75,7 +79,7 @@ export class UIPanel {
     // Keyboard hints
     const hints = document.createElement('div');
     hints.className = 'hints';
-    hints.textContent = 'U:undo \u2190\u2192\u2191\u2193:nav Space:engine Ctrl+V:pgn';
+    hints.textContent = 'U:undo F:flip \u2190\u2192\u2191\u2193:nav Space:engine Ctrl+V:pgn';
     this.container.appendChild(hints);
 
     this._updateStatus();
@@ -254,6 +258,60 @@ export class UIPanel {
 
   _openLoadDialog() {
     this.state.emit('openLoadDialog');
+  }
+
+  _sharePosition() {
+    const fen = this.state.chess.fen();
+    const url = new URL(window.location.href.split('?')[0]);
+    url.searchParams.set('fen', fen);
+    navigator.clipboard.writeText(url.toString()).then(() => {
+      this.state.status = 'URL copied to clipboard';
+      this.state.emit('boardChanged');
+    }).catch(() => {
+      // Fallback: show in prompt
+      prompt('Share this URL:', url.toString());
+    });
+  }
+
+  _exportMermaid() {
+    const state = this.state;
+    const lines = ['graph TD'];
+    const visited = new Set();
+
+    const nodeLabel = (n) => {
+      let label = n.san || 'Start';
+      if (n.annotation) label += n.annotation;
+      if (n.note) label += ` "${n.note.substring(0, 20)}"`;
+      return label.replace(/"/g, '#quot;');
+    };
+
+    const nodeId = (n) => `n${n.id}`;
+
+    const walk = (node) => {
+      if (visited.has(node.id)) return;
+      visited.add(node.id);
+      for (const child of node.children) {
+        lines.push(`    ${nodeId(node)}["${nodeLabel(node)}"] --> ${nodeId(child)}["${nodeLabel(child)}"]`);
+        walk(child);
+      }
+      // Leaf nodes with no children still need to be declared
+      if (!node.children.length && !node.parent) {
+        lines.push(`    ${nodeId(node)}["${nodeLabel(node)}"]`);
+      }
+    };
+
+    walk(state.treeRoot);
+
+    const mmd = lines.join('\n');
+    const blob = new Blob([mmd], { type: 'text/plain' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'branchess-tree.mmd';
+    a.click();
+    URL.revokeObjectURL(a.href);
+
+    state.status = 'Exported Mermaid file';
+    state.emit('boardChanged');
   }
 
   _enterSetupMode() {

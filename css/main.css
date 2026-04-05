@@ -16,7 +16,7 @@
 
 html, body {
   height: 100%;
-  background: var(--bg);
+  background: #1a3a2a;
   color: var(--text);
   font-family: 'Inter', system-ui, sans-serif;
   overflow: hidden;
@@ -25,7 +25,30 @@ html, body {
 #app {
   display: flex;
   height: 100vh;
-  width: 100vw;
+  width: fit-content;
+  max-width: 100vw;
+  margin: 0 auto;
+  background: var(--bg);
+}
+
+/* Board wrapper */
+#board-wrap {
+  display: flex;
+  flex-direction: column;
+  align-self: center;
+  flex-shrink: 0;
+}
+
+.file-labels {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: 'Inter', sans-serif;
+  color: var(--text-dim);
+  text-align: center;
+  padding: 2px 0;
+  user-select: none;
 }
 
 /* Board */
@@ -35,9 +58,8 @@ html, body {
   grid-template-columns: repeat(8, 1fr);
   grid-template-rows: repeat(8, 1fr);
   aspect-ratio: 1;
-  height: 100vh;
-  max-height: 100vw;
-  flex-shrink: 0;
+  height: 88vh;
+  max-height: 88vw;
 }
 
 .square {
@@ -51,7 +73,7 @@ html, body {
 
 /* Pieces */
 .piece {
-  font-size: calc(100vh / 8 * 0.72);
+  font-size: calc(88vh / 8 * 0.72);
   line-height: 1;
   pointer-events: none;
   z-index: 2;
@@ -75,7 +97,7 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: calc(100vh / 8 * 0.72);
+  font-size: calc(88vh / 8 * 0.72);
   line-height: 1;
 }
 
@@ -145,10 +167,6 @@ html, body {
   font-family: 'Inter', sans-serif;
 }
 
-.label-file {
-  bottom: 1px;
-  right: 3px;
-}
 
 .label-rank {
   top: 1px;
@@ -159,7 +177,7 @@ html, body {
 #panel, #setup-panel {
   flex: 1;
   min-width: 240px;
-  max-width: 320px;
+  max-width: 420px;
   background: var(--panel-bg);
   display: flex;
   flex-direction: column;
@@ -199,14 +217,14 @@ html, body {
 }
 
 .branch-info {
-  font-size: 12px;
+  font-size: 15px;
   color: var(--text-dim);
   padding: 4px 6px;
   font-family: 'Inter', sans-serif;
 }
 
 .move-list {
-  font-size: 11px;
+  font-size: 15px;
   color: var(--text-dim);
   padding: 2px 6px 8px;
   font-family: 'JetBrains Mono', monospace;
@@ -322,6 +340,60 @@ html, body {
   align-items: center;
   justify-content: center;
   z-index: 1000;
+}
+
+/* Fullscreen tree mode */
+.tree-fullscreen {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 500;
+  background: #1e1c1a;
+  width: 100vw !important;
+  height: 100vh !important;
+  min-height: 100vh !important;
+  max-height: none !important;
+  flex: none !important;
+  margin: 0 !important;
+  border-radius: 0 !important;
+  overflow: visible !important;
+}
+
+.board-floating {
+  position: fixed !important;
+  z-index: 600;
+  flex-shrink: 0;
+  cursor: move;
+  border: 2px solid #555;
+  border-radius: 6px;
+  background: var(--bg);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.5);
+}
+
+.board-floating #board {
+  height: 30vh;
+  max-height: 30vw;
+}
+
+.board-floating .file-labels {
+  font-size: 10px;
+}
+
+.board-floating .piece {
+  font-size: calc(30vh / 8 * 0.72) !important;
+}
+
+.board-floating .piece-ghost {
+  font-size: calc(30vh / 8 * 0.72) !important;
+}
+
+/* When tree is fullscreen, hide panel but tree escapes via position:fixed */
+.panel-hidden {
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+.panel-hidden .tree-fullscreen {
+  visibility: visible !important;
+  pointer-events: auto !important;
 }
 
 /* Responsive: stack on narrow screens */

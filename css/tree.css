@@ -6,9 +6,101 @@
 
 .tree-svg text {
   pointer-events: none;
+  stroke: #000;
+  stroke-width: 3px;
+  paint-order: stroke fill;
+}
+
+.tree-svg text.opening-label {
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.tree-svg text.opening-label:hover {
+  text-decoration: underline;
+  opacity: 1 !important;
 }
 
 .tree-svg circle,
 .tree-svg polygon {
   cursor: pointer;
+}
+
+.tree-svg .ghost-hit:hover ~ circle {
+  opacity: 1;
+}
+
+/* Zoom controls */
+.tree-zoom-bar {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  gap: 3px;
+  z-index: 510;
+}
+
+.tree-zoom-btn {
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 4px;
+  background: rgba(80, 80, 80, 0.7);
+  color: #dcdcdc;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  padding: 0;
+  transition: background 0.15s;
+}
+
+.tree-zoom-btn:hover {
+  background: rgba(100, 100, 100, 0.9);
+}
+
+/* Annotation context menu */
+.anno-menu {
+  position: fixed;
+  z-index: 2000;
+  background: #373532;
+  border: 1px solid #646464;
+  border-radius: 6px;
+  padding: 4px 0;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+  min-width: 160px;
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+.anno-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 14px;
+  cursor: pointer;
+  color: #dcdcdc;
+  font-size: 13px;
+  transition: background 0.1s;
+}
+
+.anno-menu-item:hover {
+  background: #4a4845;
+}
+
+.anno-menu-item.anno-menu-active {
+  background: #3c5a3c;
+}
+
+.anno-menu-sym {
+  font-weight: 700;
+  font-size: 16px;
+  min-width: 24px;
+  text-align: center;
+}
+
+.anno-menu-label {
+  color: #bbb;
 }

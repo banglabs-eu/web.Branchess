@@ -10,6 +10,8 @@ export class GameNode {
     this.san = san;
     this.parent = parent;
     this.children = [];
+    this.annotation = ''; // !, ?, !!, ??, !?, ?!
+    this.note = '';        // free-form text
   }
 
   addChild(move, fen, san) {

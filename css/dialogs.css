@@ -54,6 +54,26 @@
 }
 .dialog-input:focus { border-color: #aaa; }
 
+.dialog-textarea {
+  width: 100%;
+  min-width: 300px;
+  background: #464441;
+  border: 1px solid #969696;
+  border-radius: 4px;
+  color: #dcdcdc;
+  font-size: 13px;
+  padding: 8px;
+  font-family: 'Inter', sans-serif;
+  resize: vertical;
+  margin-bottom: 12px;
+}
+.dialog-textarea:focus { border-color: #aaa; outline: none; }
+
+.note-dialog {
+  min-width: 340px;
+  z-index: 1100;
+}
+
 .dialog-btn-row {
   display: flex;
   gap: 8px;
