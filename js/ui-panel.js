@@ -137,15 +137,18 @@ export class UIPanel {
 
   _updateSliderTrack() {
     const t = this.state.strength / 100;
+    // Cool blue (low) → warm orange (mid) → hot red (high)
     let r, g, b;
     if (t < 0.5) {
-      r = Math.round(220 - t * 200);
-      g = Math.round(80 + t * 300);
-      b = 60;
+      const s = t * 2; // 0-1 over first half
+      r = Math.round(60 + s * 200);
+      g = Math.round(120 + s * 80);
+      b = Math.round(220 - s * 120);
     } else {
-      r = Math.round(120 - (t - 0.5) * 160);
-      g = Math.round(230 - (t - 0.5) * 60);
-      b = Math.round(60 + (t - 0.5) * 40);
+      const s = (t - 0.5) * 2; // 0-1 over second half
+      r = Math.round(260 - s * 30);
+      g = Math.round(200 - s * 160);
+      b = Math.round(100 - s * 70);
     }
     const color = `rgb(${r},${g},${b})`;
     const pct = this.state.strength + '%';
