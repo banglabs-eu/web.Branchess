@@ -72,6 +72,8 @@ export class UIPanel {
     this._addBtn(btnArea, 'Export Mermaid', () => this._exportMermaid());
     this._addBtn(btnArea, 'Save Position', () => this._openSaveDialog());
     this._addBtn(btnArea, 'Load Position', () => this._openLoadDialog());
+    this._addBtn(btnArea, 'Save Game', () => this.state.emit('openSaveGameDialog'));
+    this._addBtn(btnArea, 'Load Game', () => this.state.emit('openLoadGameDialog'));
     this._addBtn(btnArea, 'Setup Board', () => this._enterSetupMode());
     this._addBtn(btnArea, 'New Game', () => this.state.newGame());
 

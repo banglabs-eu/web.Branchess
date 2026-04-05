@@ -45,6 +45,28 @@ export class GameNode {
   }
 }
 
+export function serializeTree(root) {
+  function walk(node) {
+    const obj = { fen: node.fen, san: node.san, annotation: node.annotation, note: node.note };
+    if (node.move) obj.move = node.move;
+    if (node.children.length) obj.children = node.children.map(walk);
+    return obj;
+  }
+  return walk(root);
+}
+
+export function deserializeTree(data, parent = null) {
+  const node = new GameNode(data.fen, data.move || null, data.san || '', parent);
+  node.annotation = data.annotation || '';
+  node.note = data.note || '';
+  if (data.children) {
+    for (const childData of data.children) {
+      node.children.push(deserializeTree(childData, node));
+    }
+  }
+  return node;
+}
+
 export function computeTreeLayout(root) {
   const positions = new Map();
   let nextX = 0;
