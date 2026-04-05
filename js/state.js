@@ -44,7 +44,7 @@ export class GameState extends EventEmitter {
     this._queuedEngineNav = null;
 
     // Strength (0-100)
-    this.strength = 70;
+    this.strength = 30;
 
     // Setup mode
     this.setupMode = false;
@@ -142,9 +142,9 @@ export class GameState extends EventEmitter {
   strengthParams() {
     const t = this.strength / 100;
     const skill = Math.round(t * 20);
-    const temperature = Math.max(0, 1.8 * Math.pow(1 - t, 1.5));
-    const thinkTime = Math.round(50 + t * 950); // ms
-    const elo = Math.round(400 + t * t * 3100);
+    const temperature = Math.max(0, 3.0 * Math.pow(1 - t, 1.2));
+    const thinkTime = Math.round(20 + t * t * 1500); // ms — very fast at low levels
+    const elo = Math.round(200 + t * t * 3300);
     return { skill, temperature, thinkTime, elo };
   }
 
