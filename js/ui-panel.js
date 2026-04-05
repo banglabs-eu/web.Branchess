@@ -60,7 +60,10 @@ export class UIPanel {
 
     // Full-width buttons
     this._addBtn(btnArea, 'Flip Board', () => this.state.flipBoard());
-    this._addBtn(btnArea, '2P Mode', () => this.state.toggleVersusMode());
+    this.versusBtn = this._addBtn(btnArea, '2P Mode', () => {
+      this.state.toggleVersusMode();
+      this.versusBtn.textContent = this.state.versusMode ? '1P Mode' : '2P Mode';
+    });
     this._addBtn(btnArea, 'Share Position', () => this._sharePosition());
     this._addBtn(btnArea, 'Export Mermaid', () => this._exportMermaid());
     this._addBtn(btnArea, 'Save Position', () => this._openSaveDialog());
