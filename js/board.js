@@ -23,14 +23,14 @@ export class BoardView {
 
     const topLabels = document.getElementById('file-labels-top');
     const bottomLabels = document.getElementById('file-labels-bottom');
+    const rankLabels = document.getElementById('rank-labels');
     topLabels.innerHTML = '';
     bottomLabels.innerHTML = '';
+    rankLabels.innerHTML = '';
 
     if (versus) {
-      // 90° rotation: rows = ranks (1-8 left to right), cols = files (a-h top to bottom)
-      // White on left (rank 1-2), Black on right (rank 7-8)
-      // Grid row = file index (a=top, h=bottom), Grid col = rank (1=left, 8=right)
-      // Top/bottom labels show ranks 1-8
+      // 90° rotation: grid row = file (a-h), grid col = rank (1-8)
+      // File labels on top/bottom, rank labels on left side
       for (let col = 0; col < 8; col++) {
         const tl = document.createElement('span');
         tl.textContent = String(col + 1);
@@ -39,12 +39,16 @@ export class BoardView {
         bl.textContent = String(col + 1);
         bottomLabels.appendChild(bl);
       }
+      for (let row = 0; row < 8; row++) {
+        const rl = document.createElement('span');
+        rl.textContent = FILES[row].toUpperCase();
+        rankLabels.appendChild(rl);
+      }
 
       for (let row = 0; row < 8; row++) {
         for (let col = 0; col < 8; col++) {
           const sq = document.createElement('div');
           sq.className = 'square';
-          // file = row (a=0 at top), rank = col+1 (1 at left)
           const file = FILES[row];
           const rank = String(col + 1);
           const isLight = (row + col) % 2 === 0;
@@ -52,15 +56,6 @@ export class BoardView {
           sq.dataset.square = file + rank;
           sq.dataset.row = row;
           sq.dataset.col = col;
-
-          // File labels (left column)
-          if (col === 0) {
-            const label = document.createElement('span');
-            label.className = 'label label-rank';
-            label.textContent = file.toUpperCase();
-            label.style.color = isLight ? COLOR_DARK_SQ : COLOR_LIGHT_SQ;
-            sq.appendChild(label);
-          }
 
           this.squares.push(sq);
           this.container.appendChild(sq);
@@ -79,6 +74,11 @@ export class BoardView {
         bl.textContent = files[col].toUpperCase();
         bottomLabels.appendChild(bl);
       }
+      for (let row = 0; row < 8; row++) {
+        const rl = document.createElement('span');
+        rl.textContent = ranks[row];
+        rankLabels.appendChild(rl);
+      }
 
       for (let row = 0; row < 8; row++) {
         for (let col = 0; col < 8; col++) {
@@ -89,15 +89,6 @@ export class BoardView {
           sq.dataset.square = files[col] + ranks[row];
           sq.dataset.row = row;
           sq.dataset.col = col;
-
-          // Rank labels (left column)
-          if (col === 0) {
-            const label = document.createElement('span');
-            label.className = 'label label-rank';
-            label.textContent = ranks[row];
-            label.style.color = isLight ? COLOR_DARK_SQ : COLOR_LIGHT_SQ;
-            sq.appendChild(label);
-          }
 
           this.squares.push(sq);
           this.container.appendChild(sq);
