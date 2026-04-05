@@ -46,7 +46,7 @@ export class UIPanel {
     this.moveInput = document.createElement('input');
     this.moveInput.type = 'text';
     this.moveInput.className = 'move-input';
-    this.moveInput.placeholder = 'Type move (e.g. e4, Nf3)';
+    this.moveInput.placeholder = 'e.g. e4 e5 or Nf3';
     this.moveInput.style.display = 'none';
     this.container.appendChild(this.moveInput);
 
@@ -54,7 +54,7 @@ export class UIPanel {
     this.moveInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
         e.preventDefault();
-        this._playTypedMove(this.moveInput.value.trim());
+        this._playTypedMoves(this.moveInput.value.trim());
         this.moveInput.value = '';
       } else if (e.key === 'Escape') {
         this._exitMoveInput();
@@ -290,34 +290,46 @@ export class UIPanel {
       return;
     }
     const chess = this.state.chess;
-    try {
-      chess.move(text);
-      chess.undo();
-      this.moveInput.classList.remove('move-input-invalid');
-    } catch {
-      this.moveInput.classList.add('move-input-invalid');
+    const moves = text.split(/\s+/);
+    let valid = true;
+    const undos = [];
+    for (const m of moves) {
+      try {
+        chess.move(m);
+        undos.push(true);
+      } catch {
+        valid = false;
+        break;
+      }
+    }
+    for (const _ of undos) chess.undo();
+    this.moveInput.classList.toggle('move-input-invalid', !valid);
+  }
+
+  _playTypedMoves(text) {
+    if (!text) return;
+    const moves = text.split(/\s+/);
+    for (const m of moves) {
+      if (!this._playTypedMove(m)) break;
     }
   }
 
   _playTypedMove(text) {
-    if (!text) return;
+    if (!text) return false;
     const state = this.state;
     const chess = state.chess;
 
-    // Try to parse the move as SAN
     let result;
     try {
       result = chess.move(text);
     } catch {
       state.status = `Invalid move: ${text}`;
       state.emit('boardChanged');
-      return;
+      return false;
     }
 
-    // Check if move exists in tree already
     const existing = state.currentNode.findChild({ from: result.from, to: result.to, promotion: result.promotion || '' });
     if (existing) {
-      // Undo the chess.js move since navigateTo will load the FEN
       chess.undo();
       state.navigateTo(existing);
     } else {
@@ -339,6 +351,7 @@ export class UIPanel {
     }
     state.emit('boardChanged');
     state.emit('treeChanged');
+    return true;
   }
 
   async _loadLichess() {
