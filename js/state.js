@@ -172,7 +172,6 @@ export class GameState extends EventEmitter {
 
   flipBoard() {
     this.playerColor = this.playerColor === 'w' ? 'b' : 'w';
-    this.versusMode = false;
     this.emit('boardFlipped');
     this.emit('boardChanged');
   }

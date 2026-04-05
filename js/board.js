@@ -29,19 +29,22 @@ export class BoardView {
     rankLabels.innerHTML = '';
 
     if (versus) {
-      // 90° rotation: grid row = file (a-h), grid col = rank (1-8)
-      // File labels on top/bottom, rank labels on left side
+      // 90° rotation: grid row = file, grid col = rank
+      // flipped: black on left (rank 8→1), normal: white on left (rank 1→8)
+      const vRanks = flipped ? [8,7,6,5,4,3,2,1] : [1,2,3,4,5,6,7,8];
+      const vFiles = flipped ? [...FILES].reverse() : [...FILES];
+
       for (let col = 0; col < 8; col++) {
         const tl = document.createElement('span');
-        tl.textContent = String(col + 1);
+        tl.textContent = String(vRanks[col]);
         topLabels.appendChild(tl);
         const bl = document.createElement('span');
-        bl.textContent = String(col + 1);
+        bl.textContent = String(vRanks[col]);
         bottomLabels.appendChild(bl);
       }
       for (let row = 0; row < 8; row++) {
         const rl = document.createElement('span');
-        rl.textContent = FILES[row].toUpperCase();
+        rl.textContent = vFiles[row].toUpperCase();
         rankLabels.appendChild(rl);
       }
 
@@ -49,8 +52,8 @@ export class BoardView {
         for (let col = 0; col < 8; col++) {
           const sq = document.createElement('div');
           sq.className = 'square';
-          const file = FILES[row];
-          const rank = String(col + 1);
+          const file = vFiles[row];
+          const rank = String(vRanks[col]);
           const isLight = (row + col) % 2 === 0;
           sq.style.background = isLight ? COLOR_LIGHT_SQ : COLOR_DARK_SQ;
           sq.dataset.square = file + rank;
@@ -104,9 +107,8 @@ export class BoardView {
     const row = 8 - parseInt(algebraic[1]);    // 8=0, 1=7, rank inverted
 
     if (versus) {
-      // Grid row = file (a=0 at top), Grid col = rank-1 (1=0 at left)
-      const gridRow = col;            // file a=0 at top
-      const gridCol = parseInt(algebraic[1]) - 1; // rank 1=0 at left
+      const gridRow = flipped ? (7 - col) : col;
+      const gridCol = flipped ? (8 - parseInt(algebraic[1])) : (parseInt(algebraic[1]) - 1);
       return gridRow * 8 + gridCol;
     }
     if (flipped) return (7 - row) * 8 + (7 - col);
@@ -134,14 +136,9 @@ export class BoardView {
         if (!p) continue;
         let idx;
         if (versus) {
-          // board[row][col]: row=0 is rank 8, col=0 is file a
-          // grid: gridRow=file(col), gridCol=rank(7-row) → rank 8=left? No, rank 1=left
-          // board row 0 = rank 8, board row 7 = rank 1
-          // grid col = rank-1 = 7-row (so rank 8 → col 7, rank 1 → col 0... wait)
-          // We want rank 1 on left (gridCol 0) and rank 8 on right (gridCol 7)
-          // board row 0 = rank 8 → gridCol 7, board row 7 = rank 1 → gridCol 0
-          const gridRow = col;        // file a=0 at top
-          const gridCol = 7 - row;    // rank 1=left(0), rank 8=right(7)
+          // board[row][col]: row=0=rank8, col=0=fileA
+          const gridRow = flipped ? (7 - col) : col;
+          const gridCol = flipped ? row : (7 - row);
           idx = gridRow * 8 + gridCol;
         } else if (flipped) {
           idx = (7 - row) * 8 + (7 - col);
@@ -177,7 +174,11 @@ export class BoardView {
           const p = board[row][col];
           if (p && p.type === 'k' && p.color === turn) {
             let ki;
-            if (versus) { ki = col * 8 + (7 - row); }
+            if (versus) {
+              const gr = flipped ? (7 - col) : col;
+              const gc = flipped ? row : (7 - row);
+              ki = gr * 8 + gc;
+            }
             else if (flipped) { ki = (7 - row) * 8 + (7 - col); }
             else { ki = row * 8 + col; }
             this.squares[ki].classList.add('highlight-check');
