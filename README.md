@@ -74,7 +74,6 @@ No build step. Pure HTML/CSS/JS.
 | H | Toggle move highlights |
 | E | Toggle setup mode |
 | Ctrl+S | Save position |
-| Ctrl+L | Load position |
 | Ctrl+V | Paste PGN |
 | Right-click node | Annotate move |
 | Double-click node | Write notes |

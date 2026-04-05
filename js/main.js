@@ -105,10 +105,6 @@ document.addEventListener('keydown', (e) => {
     e.preventDefault();
     state.emit('openSaveDialog');
   }
-  else if (e.key === 'l' && e.ctrlKey) {
-    e.preventDefault();
-    state.emit('openLoadDialog');
-  }
   else if (e.key === 'v' && e.ctrlKey) {
     // Let Paste PGN handle it
     uiPanel._pastePGN();
