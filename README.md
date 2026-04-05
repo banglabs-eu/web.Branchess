@@ -20,9 +20,8 @@ No build step. Pure HTML/CSS/JS.
 - Flip board to play as black
 - 2P versus mode — board rotated 90 degrees, white left / black right, flip to swap sides
 - Setup mode for custom positions
-- PGN import via clipboard
 - Board labels (A-H files, 1-8 ranks) outside the board
-- Small screen warning for mobile users
+- Responsive layout — board always square, side panel always at least 1/3 of viewport
 
 ### Branching game tree
 - Every move creates a branch — navigate freely between variations
@@ -55,11 +54,23 @@ No build step. Pure HTML/CSS/JS.
 - Blue-to-red slider color indicating difficulty
 - Engine auto-responds after your moves — click a piece to interrupt and play manually
 - Request engine move with spacebar or Engine Move button
+- **Pause Engine** — disable auto-responses to play both sides manually (e.g., to recreate a game from chess.com)
+- **Show Best Move** — full-strength analysis highlights the top move on the board with evaluation score
+
+### Game input
+- **Type moves** — double-click the move list to type moves in SAN notation (e.g., e4, Nf3, O-O). Real-time validation highlights invalid moves in red.
+- **Import from Lichess** — paste any Lichess game URL or ID to load the full game
+- **PGN import** via clipboard
 
 ### Persistence and sharing
 - Save/load positions (IndexedDB, browser-local)
+- **Save/load full games** with all branches, annotations, and notes (IndexedDB)
 - Share position via URL (`?fen=...` parameter, copied to clipboard)
-- Export game tree as Mermaid `.mmd` file
+- **Export/import Mermaid** — round-trip game trees as `.mmd` files with embedded metadata. Notes appear as separate boxes in the diagram.
+
+### Themes
+- **Classic** — traditional chess.com-style brown board
+- **Bang Labs** — dark indigo/cyan theme matching bang-labs.eu branding, with themed tree colors and fireworks effects on checkmate wins
 
 ## Keyboard shortcuts
 
@@ -83,7 +94,7 @@ No build step. Pure HTML/CSS/JS.
 
 ```
 index.html          Entry point
-css/main.css        Layout, dark theme, board, small screen warning
+css/main.css        Layout, themes (classic + Bang Labs), board
 css/tree.css        Tree SVG styles, zoom controls, annotation menu
 css/dialogs.css     Promotion, save/load, note editor dialogs
 js/main.js          Wires everything together, keyboard shortcuts, URL sharing
@@ -98,7 +109,8 @@ js/tree-view.js     SVG tree, opening book, tablebases, annotations, fullscreen
 js/animation.js     CSS transition piece slides
 js/setup.js         Setup mode: piece palette, castling inference
 js/persistence.js   IndexedDB save/load + dialogs
-js/ui-panel.js      Side panel: buttons, slider, move list, share, export
+js/ui-panel.js      Side panel: buttons, slider, move list, share, export, Lichess import
+js/bang.js          Fireworks particle effect + synthesized thunder (Bang Labs theme)
 js/openings.js      171 openings with move sequences and win/draw/loss stats
 js/tablebase.js     Syzygy tablebase lookups via Lichess API
 lib/chess.js        Vendored chess.js (ESM)
