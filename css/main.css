@@ -85,8 +85,8 @@ html, body {
   grid-template-columns: repeat(8, 1fr);
   grid-template-rows: repeat(8, 1fr);
   aspect-ratio: 1;
-  height: 88vh;
-  max-height: min(88vw, calc(200vw / 3));
+  width: 100%;
+  max-height: 88vh;
 }
 
 .square {
