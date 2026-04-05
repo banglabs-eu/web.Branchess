@@ -49,9 +49,9 @@ const setupPanel = new SetupPanel(setupContainer, state);
 const boardWrap = document.getElementById('board-wrap');
 let boardLastClick = 0;
 boardWrap.addEventListener('mousedown', (e) => {
+  if (e.target.closest('.btn-area, .panel-btn, .move-list, .move-input')) return;
   const now = Date.now();
   if (now - boardLastClick < 300 && treeView._fullscreen) {
-    // Fake event for _toggleFullscreen
     treeView._toggleFullscreen(e);
     boardLastClick = 0;
     return;
