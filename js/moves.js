@@ -293,6 +293,11 @@ export class MoveHandler {
     }
 
     // Auto engine response after the player moves
+    if (state.enginePaused) {
+      state.status = state.chess.turn() === 'w' ? 'White to move' : 'Black to move';
+      state.emit('boardChanged');
+      return;
+    }
     if (movedColor === state.playerColor) {
       if (state.currentNode.children.length) {
         const target = state.currentNode.children[0];

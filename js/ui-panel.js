@@ -60,6 +60,10 @@ export class UIPanel {
 
     // Full-width buttons
     this._addBtn(btnArea, 'Flip Board', () => this.state.flipBoard());
+    this.pauseEngineBtn = this._addBtn(btnArea, 'Pause Engine', () => {
+      this.state.enginePaused = !this.state.enginePaused;
+      this.pauseEngineBtn.textContent = this.state.enginePaused ? 'Resume Engine' : 'Pause Engine';
+    });
     this.versusBtn = this._addBtn(btnArea, '2P Mode', () => {
       this.state.toggleVersusMode();
       this.versusBtn.textContent = this.state.versusMode ? '1P Mode' : '2P Mode';

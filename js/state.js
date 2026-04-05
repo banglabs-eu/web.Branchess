@@ -23,6 +23,7 @@ export class GameState extends EventEmitter {
     // Board orientation: 'w' = white on bottom, 'b' = black on bottom
     this.playerColor = 'w';
     this.versusMode = false; // 90° rotated board for 2 humans
+    this.enginePaused = false; // When true, engine won't auto-respond
 
     // Selection / UI
     this.selectedSq = null;
