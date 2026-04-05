@@ -152,6 +152,9 @@ export class UIPanel {
     }
     const color = `rgb(${r},${g},${b})`;
     const pct = this.state.strength + '%';
+    this.slider.style.setProperty('--slider-color', color);
+    this.slider.style.setProperty('--val', pct);
+    // Fallback for Firefox (no ::webkit track)
     this.slider.style.background = `linear-gradient(to right, ${color} 0%, ${color} ${pct}, #3c3a37 ${pct}, #3c3a37 100%)`;
   }
 
