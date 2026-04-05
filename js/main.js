@@ -79,6 +79,8 @@ document.addEventListener('keydown', (e) => {
   // Let dialogs handle their own keys
   dialogs.handleKeydown(e);
 
+  // Skip shortcuts when typing in an input field
+  if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) return;
   if (state.showSaveDialog || state.showLoadDialog) return;
   if (state.promotingFrom !== null) return;
 
