@@ -301,6 +301,7 @@ html, body {
   background: #dcdcdc;
   border: 2px solid #3c3c3c;
   cursor: pointer;
+  margin-top: -6px;
 }
 
 .strength-slider::-moz-range-thumb {
