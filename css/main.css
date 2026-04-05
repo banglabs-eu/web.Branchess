@@ -460,7 +460,7 @@ html, body {
 }
 
 .board-floating #board {
-  --board-size: min(30vh, 30vw);
+  --board-size: min(25vh, 25vw);
   width: var(--board-size);
   height: var(--board-size);
 }
@@ -469,15 +469,21 @@ html, body {
   font-size: 10px;
 }
 
+.board-floating .rank-labels {
+  height: min(25vh, 25vw);
+  font-size: 10px;
+}
+
 .board-floating .piece {
-  font-size: calc(min(30vh, 30vw) / 8 * 0.72) !important;
+  font-size: calc(min(25vh, 25vw) / 8 * 0.72) !important;
 }
 
 .board-floating .piece-ghost {
-  font-size: calc(min(30vh, 30vw) / 8 * 0.72) !important;
+  font-size: calc(min(25vh, 25vw) / 8 * 0.72) !important;
 }
 
 .board-floating .btn-area {
+  max-height: 40vh;
   overflow-y: auto;
   padding: 4px;
   background: var(--panel-bg);
