@@ -1,5 +1,7 @@
 // Click-to-move handling, promotion, player/engine move execution
 import { ANIM_DURATION } from './constants.js';
+import { forceLoadBoard } from './board-utils.js';
+import { t } from './i18n.js';
 
 export class MoveHandler {
   constructor(state, boardView, animationManager, engine) {
@@ -98,6 +100,15 @@ export class MoveHandler {
               return;
             }
           }
+          // In board setup mode, dragging off the board removes the piece
+          if (this.state.boardSetupMode && this._dragFromSq && !sqEl) {
+            this._forceRemove(this._dragFromSq);
+            this.state.selectedSq = null;
+            this.state.legalDests = new Set();
+            this.state.emit('boardChanged');
+            this._dragFromSq = null;
+            return;
+          }
           // Drag cancelled — deselect
           this.state.selectedSq = null;
           this.state.legalDests = new Set();
@@ -147,6 +158,12 @@ export class MoveHandler {
 
     if (state.setupMode) {
       this._handleSetupClick(sq);
+      return;
+    }
+    if (state.boardSetupMode && state.boardSetupSelectedPiece) {
+      // Place selected palette piece on board (bypass king restriction)
+      this._forcePut(state.boardSetupSelectedPiece, sq);
+      state.emit('boardChanged');
       return;
     }
     if (state.gameOver) return;
@@ -202,12 +219,49 @@ export class MoveHandler {
   _executeMove(move) {
     const state = this.state;
     const chess = state.chess;
+    const piece = chess.get(move.from);
+    if (!piece) return;
+    const pieceColor = piece.color;
+
+    // Detect same-color double move → enter board setup mode
+    if (!state.boardSetupMode && state.lastMovedPieceColor !== null && pieceColor === state.lastMovedPieceColor) {
+      state.boardSetupMode = true;
+      state.boardSetupSelectedPiece = null;
+      state.setupTurn = state.chess.turn();
+      state.status = t('boardSetupMode');
+      state.emit('boardSetupModeChanged');
+      state.emit('boardChanged');
+    }
+
+    // In board setup mode, apply move physically without tracking in tree
+    if (state.boardSetupMode) {
+      const board = chess.board();
+      const fromRank = 8 - parseInt(move.from[1]);
+      const fromFile = move.from.charCodeAt(0) - 97;
+      const toRank = 8 - parseInt(move.to[1]);
+      const toFile = move.to.charCodeAt(0) - 97;
+      const placed = move.promotion
+        ? { type: move.promotion, color: pieceColor }
+        : piece;
+      board[fromRank][fromFile] = null;
+      board[toRank][toFile] = placed;
+      this._loadBoard(board);
+      state.lastMove = { from: move.from, to: move.to };
+      state.lastMovedPieceColor = pieceColor;
+      state.selectedSq = null;
+      state.legalDests = new Set();
+      state.status = t('boardSetupMode');
+      state.emit('boardChanged');
+      return;
+    }
+
     const movedColor = chess.turn();
 
     // Check if move exists in tree already
     const existing = state.currentNode.findChild(move);
     if (existing) {
       // Animate then navigate
+      state.lastMovedPieceColor = pieceColor;
       this.animation.animate(move, () => {
         state.navigateTo(existing);
         this._afterPlayerMove(movedColor);
@@ -278,6 +332,7 @@ export class MoveHandler {
     // Animate
     state.selectedSq = null;
     state.legalDests = new Set();
+    state.lastMovedPieceColor = pieceColor;
 
     this.animation.animate(move, () => {
       state.emit('boardChanged');
@@ -294,7 +349,7 @@ export class MoveHandler {
 
     // Auto engine response after the player moves
     if (state.enginePaused) {
-      state.status = state.chess.turn() === 'w' ? 'White to move' : 'Black to move';
+      state.status = state.chess.turn() === 'w' ? t('whiteToMove') : t('blackToMove');
       state.emit('boardChanged');
       return;
     }
@@ -304,14 +359,14 @@ export class MoveHandler {
         const move = target.move;
         this.animation.animate(move, () => {
           state.navigateTo(target);
-          if (!state.gameOver) state.status = state.chess.turn() === 'w' ? 'White to move' : 'Black to move';
+          if (!state.gameOver) state.status = state.chess.turn() === 'w' ? t('whiteToMove') : t('blackToMove');
           state.emit('boardChanged');
         });
       } else {
         this._requestEngineMove();
       }
     } else {
-      state.status = state.chess.turn() === 'w' ? 'White to move' : 'Black to move';
+      state.status = state.chess.turn() === 'w' ? t('whiteToMove') : t('blackToMove');
       state.emit('boardChanged');
     }
   }
@@ -320,13 +375,13 @@ export class MoveHandler {
     this.state.engineThinking = false;
     this._engineCancelled = true;
     this.animation.cancel();
-    this.state.status = 'Your move';
+    this.state.status = t('yourMove');
     this.state.emit('boardChanged');
   }
 
   _requestEngineMove() {
     const state = this.state;
-    state.status = 'Engine thinking...';
+    state.status = t('engineThinking');
     state.engineThinking = true;
     this._engineCancelled = false;
     state.emit('boardChanged');
@@ -389,7 +444,7 @@ export class MoveHandler {
     if (!state.chess.moves().length) return;
 
     state.engineThinking = true;
-    state.status = 'Analyzing...';
+    state.status = t('analyzing');
     state.emit('boardChanged');
 
     try {
@@ -426,6 +481,31 @@ export class MoveHandler {
     this.state.engineThinking = false;
     this._chainOpponentResponse = true;
     this._requestEngineMove();
+  }
+
+  // Force-place a piece, bypassing chess.js king/pawn restrictions
+  _forcePut(piece, sq) {
+    const chess = this.state.chess;
+    const board = chess.board();
+    const rank = 8 - parseInt(sq[1]);
+    const file = sq.charCodeAt(0) - 97;
+    board[rank][file] = piece;
+    this._loadBoard(board);
+  }
+
+  // Remove a piece by square, bypassing validation
+  _forceRemove(sq) {
+    const chess = this.state.chess;
+    const board = chess.board();
+    const rank = 8 - parseInt(sq[1]);
+    const file = sq.charCodeAt(0) - 97;
+    board[rank][file] = null;
+    this._loadBoard(board);
+  }
+
+  // Encode board array back to FEN and load, bypassing chess.js restrictions
+  _loadBoard(board) {
+    forceLoadBoard(this.state.chess, board);
   }
 
   _handleSetupClick(sq) {

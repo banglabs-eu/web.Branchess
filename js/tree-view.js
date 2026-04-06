@@ -575,7 +575,7 @@ export class TreeView {
         this.nodesGroup.append(circle);
       }
 
-      // Note indicator (small dot)
+      // Note indicator (small dot) + hover tooltip
       if (n.note) {
         const dot = document.createElementNS(SVG_NS, 'circle');
         dot.setAttribute('cx', npx + r);
@@ -583,6 +583,83 @@ export class TreeView {
         dot.setAttribute('r', Math.max(2, 3 * zoom));
         dot.setAttribute('fill', '#ffeb3b');
         this.nodesGroup.append(dot);
+
+        // Invisible hit area for hover
+        const hitR = r + 4;
+        const hit = document.createElementNS(SVG_NS, 'circle');
+        hit.setAttribute('cx', npx);
+        hit.setAttribute('cy', npy);
+        hit.setAttribute('r', hitR);
+        hit.setAttribute('fill', 'transparent');
+        hit.style.cursor = 'pointer';
+
+        // Tooltip elements (hidden until hover) — multiline
+        const fontSize = Math.max(10, 12 * zoom);
+        const lineH = fontSize * 1.4;
+        const pad = 6;
+        const maxCharsPerLine = 30;
+
+        // Word-wrap into lines
+        const lines = [];
+        for (const raw of n.note.split('\n')) {
+          if (!raw.length) { lines.push(''); continue; }
+          const words = raw.split(/\s+/);
+          let cur = '';
+          for (const w of words) {
+            if (cur && (cur.length + 1 + w.length) > maxCharsPerLine) {
+              lines.push(cur);
+              cur = w;
+            } else {
+              cur = cur ? cur + ' ' + w : w;
+            }
+          }
+          if (cur) lines.push(cur);
+        }
+
+        let maxLineW = 0;
+        for (const l of lines) maxLineW = Math.max(maxLineW, l.length);
+        const tipW = maxLineW * fontSize * 0.6 + pad * 2;
+        const tipH = lines.length * lineH + pad * 2;
+        const tipX = npx - tipW / 2;
+        const tipY = npy - r - tipH - 6;
+
+        const bg = document.createElementNS(SVG_NS, 'rect');
+        bg.setAttribute('x', tipX);
+        bg.setAttribute('y', tipY);
+        bg.setAttribute('width', tipW);
+        bg.setAttribute('height', tipH);
+        bg.setAttribute('rx', '4');
+        bg.setAttribute('fill', '#2a2a2a');
+        bg.setAttribute('stroke', '#ffeb3b');
+        bg.setAttribute('stroke-width', '1');
+        bg.setAttribute('opacity', '0.95');
+        bg.style.display = 'none';
+
+        const label = document.createElementNS(SVG_NS, 'text');
+        label.setAttribute('x', tipX + pad);
+        label.setAttribute('fill', '#e8e0d0');
+        label.setAttribute('font-size', fontSize + 'px');
+        label.setAttribute('font-family', 'system-ui, sans-serif');
+        for (let li = 0; li < lines.length; li++) {
+          const tspan = document.createElementNS(SVG_NS, 'tspan');
+          tspan.setAttribute('x', tipX + pad);
+          tspan.setAttribute('y', tipY + pad + fontSize * 0.8 + li * lineH);
+          tspan.textContent = lines[li] || '\u00a0';
+          label.appendChild(tspan);
+        }
+        label.style.display = 'none';
+
+        hit.addEventListener('mouseenter', () => {
+          bg.style.display = '';
+          label.style.display = '';
+        });
+        hit.addEventListener('mouseleave', () => {
+          bg.style.display = 'none';
+          label.style.display = 'none';
+        });
+
+        this.tooltipGroup.append(bg, label);
+        this.nodesGroup.append(hit);
       }
 
       // SAN label + annotation

@@ -8,8 +8,10 @@ import { StochasticEngine } from './engine.js';
 import { TreeView } from './tree-view.js';
 import { UIPanel } from './ui-panel.js';
 import { SetupPanel } from './setup.js';
+import { BoardSetupPanel } from './board-setup.js';
 import { DialogManager } from './persistence.js';
 import { bang, fireworksShow } from './bang.js';
+import { LANGUAGES, getLang, setLang, onLangChange, t } from './i18n.js';
 
 // Initialize — load FEN from URL if present
 const chess = new Chess();
@@ -45,6 +47,10 @@ const treeView = new TreeView(uiPanel.treeContainer, state);
 const setupContainer = document.getElementById('setup-panel');
 const setupPanel = new SetupPanel(setupContainer, state);
 
+// Board setup panel (replaces main panel when same-color double move)
+const boardSetupContainer = document.getElementById('board-setup-panel');
+const boardSetupPanel = new BoardSetupPanel(boardSetupContainer, panelContainer, state);
+
 // Double-click board to exit fullscreen tree
 const boardWrap = document.getElementById('board-wrap');
 let boardLastClick = 0;
@@ -64,11 +70,13 @@ const overlayEl = document.getElementById('overlay');
 const dialogs = new DialogManager(overlayEl, state);
 
 // Help overlay
-const helpBtn = document.getElementById('help-btn');
 const helpOverlay = document.getElementById('help-overlay');
 const helpClose = document.getElementById('help-close');
 
-helpBtn.addEventListener('click', () => helpOverlay.classList.add('active'));
+// Use delegation so it survives panel rebuilds
+panelContainer.addEventListener('click', (e) => {
+  if (e.target.closest('#help-btn')) helpOverlay.classList.add('active');
+});
 helpClose.addEventListener('click', () => helpOverlay.classList.remove('active'));
 helpOverlay.addEventListener('click', (e) => {
   if (e.target === helpOverlay) helpOverlay.classList.remove('active');
@@ -83,11 +91,46 @@ document.getElementById('help-reset').addEventListener('click', () => {
 const helpThemeBtn = document.getElementById('help-theme');
 helpThemeBtn.addEventListener('click', () => {
   const isBangLabs = document.documentElement.classList.toggle('theme-banglabs');
-  helpThemeBtn.textContent = isBangLabs ? 'Theme: Bang Labs' : 'Theme: Classic';
+  helpThemeBtn.textContent = isBangLabs ? 'Theme: Classic' : 'Theme: Bang Labs';
   localStorage.setItem('branchess-theme', isBangLabs ? 'banglabs' : 'classic');
   state.emit('treeChanged');
   state.emit('boardChanged');
 });
+
+// Language selector — inject into help overlay footer
+const helpFooterActions = document.querySelector('.help-footer-actions');
+if (helpFooterActions) {
+  const langSelect = document.createElement('select');
+  langSelect.className = 'help-theme-btn';
+  langSelect.style.marginRight = '6px';
+  langSelect.style.background = '#1a1a2e';
+  langSelect.style.color = '#e0e0e8';
+  langSelect.style.border = '1px solid #444';
+  langSelect.style.borderRadius = '6px';
+  langSelect.style.padding = '6px 8px';
+  for (const lang of LANGUAGES) {
+    const opt = document.createElement('option');
+    opt.value = lang.code;
+    opt.textContent = lang.name;
+    if (lang.code === getLang()) opt.selected = true;
+    langSelect.appendChild(opt);
+  }
+  langSelect.addEventListener('change', () => {
+    setLang(langSelect.value);
+    state.emit('boardChanged');
+    state.emit('treeChanged');
+  });
+  helpFooterActions.prepend(langSelect);
+}
+
+// Translate help overlay elements with data-i18n attributes
+function translateHelp() {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    el.textContent = t(el.dataset.i18n);
+  });
+}
+translateHelp();
+onLangChange(() => translateHelp());
 
 // Wire promotion choice back to move handler
 state.on('promotionChoice', (pieceType) => {
@@ -101,6 +144,13 @@ state.on('setupModeChanged', () => {
 });
 
 // Keyboard shortcuts
+// Scroll wheel on board navigates moves
+boardContainer.addEventListener('wheel', (e) => {
+  e.preventDefault();
+  if (e.deltaY > 0) state.goForward();
+  else if (e.deltaY < 0) state.goBack();
+}, { passive: false });
+
 document.addEventListener('keydown', (e) => {
   // Help overlay escape
   if (e.key === 'Escape' && helpOverlay.classList.contains('active')) {
@@ -151,7 +201,7 @@ document.addEventListener('keydown', (e) => {
 // Restore theme
 if (localStorage.getItem('branchess-theme') === 'banglabs') {
   document.documentElement.classList.add('theme-banglabs');
-  helpThemeBtn.textContent = 'Theme: Bang Labs';
+  helpThemeBtn.textContent = 'Theme: Classic';
 }
 
 // Fireworks — only in Bang Labs theme

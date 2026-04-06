@@ -47,6 +47,7 @@ html, body {
   margin: 0 auto;
   background: var(--bg);
   overflow: hidden;
+  --board-size: min(calc(100vh - 40px), calc(min(100vw, 1600px) * 2 / 3 - 24px));
 }
 
 /* Board wrapper */
@@ -215,7 +216,7 @@ html, body {
 
 
 /* Panel (right side) */
-#panel, #setup-panel {
+#panel, #setup-panel, #board-setup-panel {
   flex: 1;
   min-width: calc(min(100vw, 1600px) / 3);
   background: var(--panel-bg);
@@ -225,7 +226,7 @@ html, body {
   overflow-y: auto;
 }
 
-#setup-panel {
+#setup-panel, #board-setup-panel {
   display: none;
 }
 
@@ -424,6 +425,29 @@ html, body {
   text-align: center;
 }
 
+/* Board setup panel — piece grid matching board piece size */
+.board-setup-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  padding: 4px 8px;
+}
+
+.board-setup-cell {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--btn);
+  border-radius: 6px;
+  font-size: calc(var(--board-size) / 8 * 0.72);
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.board-setup-cell:hover { background: var(--btn-hover); }
+.board-setup-cell.palette-selected { background: var(--btn-active); }
+
 /* Overlay for dialogs */
 #overlay {
   display: none;
@@ -511,7 +535,7 @@ html, body {
     width: var(--board-size);
     height: var(--board-size);
   }
-  #panel, #setup-panel {
+  #panel, #setup-panel, #board-setup-panel {
     max-width: none;
     height: 50vh;
     min-width: auto;

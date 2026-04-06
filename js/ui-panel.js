@@ -1,6 +1,7 @@
 // Side panel: buttons, status, strength slider, branch info, move list
 import { COLOR_TEXT, COLOR_TEXT_DIM, COLOR_BTN_ACTIVE } from './constants.js';
 import { GameNode } from './game-tree.js';
+import { t, onLangChange } from './i18n.js';
 
 export class UIPanel {
   constructor(container, state, moveHandler) {
@@ -14,12 +15,13 @@ export class UIPanel {
     state.on('mermaidExportConfirm', (filename) => this._doMermaidDownload(filename));
     state.on('exportMermaid', () => this._exportMermaid());
     state.on('loadMermaidFile', () => this._loadMermaidFile());
+    onLangChange(() => this._build());
     state.on('playEngineConfirm', (playerColor) => {
       this.state.playerColor = playerColor;
       this.state.enginePaused = false;
-      this.playEngineBtn.textContent = 'Stop Engine';
-      const engineSide = playerColor === 'w' ? 'black' : 'white';
-      this.state.status = `Engine plays ${engineSide}`;
+      this.playEngineBtn.textContent = t('stopEngine');
+      const engineSide = playerColor === 'w' ? t('black') : t('white');
+      this.state.status = `${engineSide}`;
       this.state.emit('boardFlipped');
       this.state.emit('boardChanged');
       // If it's the engine's turn, trigger a move
@@ -52,9 +54,11 @@ export class UIPanel {
     this.statusEl.className = 'panel-status';
     this.container.appendChild(this.statusEl);
 
-    // Tree container (will be populated by TreeView)
-    this.treeContainer = document.createElement('div');
-    this.treeContainer.className = 'tree-container';
+    // Tree container — preserve across rebuilds so TreeView stays attached
+    if (!this.treeContainer) {
+      this.treeContainer = document.createElement('div');
+      this.treeContainer.className = 'tree-container';
+    }
     this.container.appendChild(this.treeContainer);
 
     // Tree hints
@@ -109,51 +113,47 @@ export class UIPanel {
     btnArea.className = 'btn-area';
 
     // --- Navigation ---
-    const navSection = this._section('Navigation');
+    const navSection = this._section(t('nav'));
     const navRow = this._btnRow();
-    this.backBtn = this._addBtn(navRow, '\u2190 Back', () => this.state.goBack(), 'half');
-    this.fwdBtn = this._addBtn(navRow, 'Fwd \u2192', () => this.state.goForward(), 'half');
+    this.backBtn = this._addBtn(navRow, t('back'), () => this.state.goBack(), 'half');
+    this.fwdBtn = this._addBtn(navRow, t('fwd'), () => this.state.goForward(), 'half');
     navSection.appendChild(navRow);
     btnArea.appendChild(navSection);
 
     // --- Engine ---
-    const engineSection = this._section('Engine');
+    const engineSection = this._section(t('engine'));
     const engineRow = this._btnRow();
-    this._addBtn(engineRow, 'Force Engine Move', () => this.moveHandler.requestEngineCalculation(), 'half');
-    this.playEngineBtn = this._addBtn(engineRow, this.state.enginePaused ? 'Play Engine' : 'Stop Engine', () => {
+    this._addBtn(engineRow, t('forceEngine'), () => this.moveHandler.requestEngineCalculation(), 'half');
+    this.playEngineBtn = this._addBtn(engineRow, this.state.enginePaused ? t('playEngine') : t('stopEngine'), () => {
       if (this.state.enginePaused) {
         this.state.emit('openPlayEngineDialog');
       } else {
         this.state.enginePaused = true;
-        this.playEngineBtn.textContent = 'Play Engine';
-        this.state.status = 'Engine stopped';
+        this.playEngineBtn.textContent = t('playEngine');
+        this.state.status = t('engineStopped');
         this.state.emit('boardChanged');
       }
     }, 'half');
     engineSection.appendChild(engineRow);
-    this._addBtn(engineSection, 'Best Move', () => this.moveHandler.showBestMove());
+    this._addBtn(engineSection, t('bestMove'), () => this.moveHandler.showBestMove());
     btnArea.appendChild(engineSection);
 
     // --- Games ---
-    const gamesSection = this._section('Games');
-    const saveRow = this._btnRow();
-    this._addBtn(saveRow, 'Save', () => this.state.emit('openSaveGameDialog'), 'half');
-    this._addBtn(saveRow, 'Load', () => this.state.emit('openLoadGameDialog'), 'half');
-    gamesSection.appendChild(saveRow);
-    const importRow = this._btnRow();
-    this._addBtn(importRow, 'Paste PGN', () => this._pastePGN(), 'half');
-    this._addBtn(importRow, 'Load Lichess', () => this._loadLichess(), 'half');
-    gamesSection.appendChild(importRow);
+    const gamesSection = this._section(t('games'));
+    const gamesRow = this._btnRow();
+    this._addBtn(gamesRow, t('saveLoad'), () => this.state.emit('openGamesDialog'), 'half');
+    this._addBtn(gamesRow, t('loadLichess'), () => this._loadLichess(), 'half');
+    gamesSection.appendChild(gamesRow);
     const ioRow2 = this._btnRow();
-    this._addBtn(ioRow2, 'Share Position', () => this._sharePosition(), 'half');
-    this._addBtn(ioRow2, 'Export/Import Branchess', () => this._showMermaidMenu(), 'half');
+    this._addBtn(ioRow2, t('sharePosition'), () => this._sharePosition(), 'half');
+    this._addBtn(ioRow2, t('exportImport'), () => this._showMermaidMenu(), 'half');
     gamesSection.appendChild(ioRow2);
     btnArea.appendChild(gamesSection);
 
     // --- Board ---
-    const boardSection = this._section('Board');
-    this._addBtn(boardSection, 'Rotate Board', () => this.state.rotateBoard());
-    this._addBtn(boardSection, 'Reset Board', () => this.state.newGame());
+    const boardSection = this._section(t('board'));
+    this._addBtn(boardSection, t('rotateBoard'), () => this.state.rotateBoard());
+    this._addBtn(boardSection, t('resetBoard'), () => this.state.newGame());
     btnArea.appendChild(boardSection);
 
     this.container.appendChild(btnArea);
@@ -259,12 +259,12 @@ export class UIPanel {
   _updateStatus() {
     const s = this.state.status;
     this.statusEl.textContent = s;
-    if (s.includes('Your')) {
-      this.statusEl.style.color = 'rgb(120,220,120)';
-    } else if (s.toLowerCase().includes('think') || s.toLowerCase().includes('calculat')) {
+    if (this.state.engineThinking) {
       this.statusEl.style.color = 'rgb(220,180,80)';
-    } else if (s.toLowerCase().includes('mate') || s.toLowerCase().includes('draw')) {
+    } else if (this.state.gameOver) {
       this.statusEl.style.color = 'rgb(220,80,80)';
+    } else if (s === t('yourMove')) {
+      this.statusEl.style.color = 'rgb(120,220,120)';
     } else {
       this.statusEl.style.color = COLOR_TEXT;
     }
@@ -307,7 +307,7 @@ export class UIPanel {
       this.moveList.scrollTop = this.moveList.scrollHeight;
       this.moveList.classList.remove('move-list-empty');
     } else {
-      this.moveList.textContent = 'Double-click to type moves';
+      this.moveList.textContent = t('doubleClickMoves');
       this.moveList.classList.add('move-list-empty');
     }
   }
@@ -387,7 +387,7 @@ export class UIPanel {
     state.legalDests = new Set();
     state.checkGameOver();
     if (!state.gameOver) {
-      state.status = chess.turn() === 'w' ? 'White to move' : 'Black to move';
+      state.status = chess.turn() === 'w' ? t('whiteToMove') : t('blackToMove');
     }
     state.emit('boardChanged');
     state.emit('treeChanged');
@@ -396,11 +396,31 @@ export class UIPanel {
 
   async _loadLichess() {
     if (this.state.engineThinking) return;
-    const input = window.prompt('Paste a Lichess game URL or ID:');
+    const input = window.prompt('Paste a Lichess game or study URL:');
     if (!input) return;
 
-    // Extract game ID: last path segment, first 8 chars
-    const match = input.trim().match(/([a-zA-Z0-9]{8})/);
+    const trimmed = input.trim();
+
+    // Detect study URL: /study/{id} or /study/{id}/{chapterId}
+    const studyMatch = trimmed.match(/lichess\.org\/study\/([a-zA-Z0-9]{8})/);
+    if (studyMatch) {
+      const studyId = studyMatch[1];
+      this.state.status = 'Loading study from Lichess...';
+      this.state.emit('boardChanged');
+      try {
+        const resp = await fetch(`https://lichess.org/api/study/${studyId}.pgn`);
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        const pgn = await resp.text();
+        this._importMultiPGN(pgn);
+      } catch (err) {
+        this.state.status = `Lichess error: ${err.message}`;
+        this.state.emit('boardChanged');
+      }
+      return;
+    }
+
+    // Extract game ID: first 8-char alphanumeric segment
+    const match = trimmed.match(/([a-zA-Z0-9]{8})/);
     if (!match) {
       this.state.status = 'Invalid Lichess URL or game ID';
       this.state.emit('boardChanged');
@@ -438,6 +458,36 @@ export class UIPanel {
       this.state.status = 'Clipboard access denied';
       this.state.emit('boardChanged');
     }
+  }
+
+  _importMultiPGN(pgnText) {
+    const games = pgnText.split(/\n\n(?=\[)/).filter(g => g.trim());
+    if (!games.length) {
+      this.state.status = 'No games found in study';
+      this.state.emit('boardChanged');
+      return;
+    }
+
+    if (games.length === 1) {
+      this._importPGN(games[0]);
+      return;
+    }
+
+    // Parse chapter names from PGN headers
+    const chapters = games.map((pgn, i) => {
+      const nameMatch = pgn.match(/\[ChapterName "([^"]+)"\]/);
+      const whiteMatch = pgn.match(/\[White "([^"]+)"\]/);
+      const blackMatch = pgn.match(/\[Black "([^"]+)"\]/);
+      const name = nameMatch ? nameMatch[1]
+        : (whiteMatch && blackMatch) ? `${whiteMatch[1]} vs ${blackMatch[1]}`
+        : `Chapter ${i + 1}`;
+      return { name, pgn };
+    });
+
+    // Show chapter picker dialog
+    this.state.emit('openStudyChapterDialog', chapters, (chapter) => {
+      this._importPGN(chapter.pgn);
+    });
   }
 
   _importPGN(pgnText) {

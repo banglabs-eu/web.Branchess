@@ -96,11 +96,13 @@ export class DialogManager {
     state.on('openLoadDialog', () => this._showLoadDialog());
     state.on('openSaveGameDialog', () => this._showSaveGameDialog());
     state.on('openLoadGameDialog', () => this._showLoadGameDialog());
+    state.on('openGamesDialog', () => this._showGamesDialog());
     state.on('promotionNeeded', () => this._showPromotionDialog());
     state.on('promotionDone', () => this._close());
     state.on('openMermaidExportDialog', () => this._showMermaidExportDialog());
     state.on('openMermaidMenu', () => this._showMermaidMenu());
     state.on('openPlayEngineDialog', () => this._showPlayEngineDialog());
+    state.on('openStudyChapterDialog', (chapters, onSelect) => this._showStudyChapterDialog(chapters, onSelect));
   }
 
   _close() {
@@ -424,6 +426,169 @@ export class DialogManager {
       }
     } catch (err) {
       list.innerHTML = `<div class="dialog-label">Error: ${err.message}</div>`;
+    }
+
+    box.appendChild(list);
+    this.overlay.appendChild(box);
+  }
+
+  // --- Combined Games Dialog (Save + Load) ---
+  async _showGamesDialog() {
+    this._showOverlay();
+    this.overlay.innerHTML = '';
+    this._currentDialog = 'games';
+
+    const box = document.createElement('div');
+    box.className = 'dialog load-dialog';
+
+    const header = document.createElement('div');
+    header.className = 'dialog-header';
+    const title = document.createElement('div');
+    title.className = 'dialog-title';
+    title.textContent = 'Games';
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'dialog-close';
+    closeBtn.textContent = 'X';
+    closeBtn.addEventListener('click', () => this._close());
+    header.append(title, closeBtn);
+    box.appendChild(header);
+
+    // Save section
+    const saveRow = document.createElement('div');
+    saveRow.className = 'dialog-btn-row';
+    saveRow.style.marginBottom = '10px';
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'dialog-input';
+    input.placeholder = 'Game name';
+    input.value = new Date().toISOString().replace(/[-:T]/g, '').substring(0, 15);
+    input.maxLength = 40;
+    input.style.flex = '1';
+
+    const saveBtn = document.createElement('button');
+    saveBtn.className = 'panel-btn btn-active';
+    saveBtn.textContent = 'Save';
+    saveBtn.style.marginLeft = '6px';
+    saveBtn.addEventListener('click', async () => {
+      try {
+        const name = input.value.trim() || input.value;
+        const treeData = serializeTree(this.state.treeRoot);
+        await saveGame(name, treeData);
+        this.state.status = `Game saved: ${name}`;
+        this.state.emit('boardChanged');
+        this._showGamesDialog(); // Refresh list
+      } catch (err) {
+        this.state.status = `Save failed: ${err.message}`;
+        this.state.emit('boardChanged');
+        this._close();
+      }
+    });
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') saveBtn.click();
+      if (e.key === 'Escape') this._close();
+    });
+
+    saveRow.append(input, saveBtn);
+    box.appendChild(saveRow);
+
+    // Load list
+    const list = document.createElement('div');
+    list.className = 'load-list';
+
+    try {
+      const games = await listGames();
+      if (!games.length) {
+        list.innerHTML = '<div class="dialog-label dim">No saved games.</div>';
+      } else {
+        for (const game of games) {
+          const item = document.createElement('div');
+          item.className = 'load-item';
+
+          const info = document.createElement('div');
+          info.className = 'load-item-info';
+          info.innerHTML = `<strong>${game.name}</strong><br>
+            <span class="dim">${(game.savedAt || '').substring(0, 16).replace('T', ' ')}</span>`;
+          info.addEventListener('click', () => {
+            const root = deserializeTree(game.tree);
+            let last = root;
+            while (last.children.length) last = last.children[0];
+            this.state.treeRoot = root;
+            this.state.currentNode = last;
+            this.state.chess.load(last.fen);
+            this.state.invalidateTreeLayout();
+            this.state.treeScrollX = 0;
+            this.state.treeScrollY = 0;
+            this.state.treeZoom = 1;
+            this.state.lastMove = last.move ? { from: last.move.from, to: last.move.to } : null;
+            this.state.selectedSq = null;
+            this.state.legalDests = new Set();
+            this.state.gameOver = false;
+            this.state.status = `Game loaded: ${game.name}`;
+            this.state.emit('boardChanged');
+            this.state.emit('treeChanged');
+            this._close();
+          });
+
+          const delBtn = document.createElement('button');
+          delBtn.className = 'load-delete';
+          delBtn.textContent = 'Del';
+          delBtn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            await deleteGame(game.id);
+            this._showGamesDialog();
+          });
+
+          item.append(info, delBtn);
+          list.appendChild(item);
+        }
+      }
+    } catch (err) {
+      list.innerHTML = `<div class="dialog-label">Error: ${err.message}</div>`;
+    }
+
+    box.appendChild(list);
+    this.overlay.appendChild(box);
+    input.focus();
+  }
+
+  // --- Study Chapter Picker ---
+  _showStudyChapterDialog(chapters, onSelect) {
+    this._showOverlay();
+    this.overlay.innerHTML = '';
+    this._currentDialog = 'study';
+
+    const box = document.createElement('div');
+    box.className = 'dialog load-dialog';
+
+    const header = document.createElement('div');
+    header.className = 'dialog-header';
+    const title = document.createElement('div');
+    title.className = 'dialog-title';
+    title.textContent = `Study — ${chapters.length} chapters`;
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'dialog-close';
+    closeBtn.textContent = 'X';
+    closeBtn.addEventListener('click', () => this._close());
+    header.append(title, closeBtn);
+    box.appendChild(header);
+
+    const list = document.createElement('div');
+    list.className = 'load-list';
+
+    for (let i = 0; i < chapters.length; i++) {
+      const ch = chapters[i];
+      const item = document.createElement('div');
+      item.className = 'load-item';
+      const info = document.createElement('div');
+      info.className = 'load-item-info';
+      info.innerHTML = `<strong>${i + 1}. ${ch.name}</strong>`;
+      info.addEventListener('click', () => {
+        this._close();
+        onSelect(ch);
+      });
+      item.appendChild(info);
+      list.appendChild(item);
     }
 
     box.appendChild(list);

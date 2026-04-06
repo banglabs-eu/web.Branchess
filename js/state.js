@@ -1,6 +1,8 @@
 // Simple event emitter + centralized game state
 import { STARTING_FEN } from './constants.js';
 import { GameNode, computeTreeLayout } from './game-tree.js';
+import { forceLoadFen } from './board-utils.js';
+import { t } from './i18n.js';
 
 class EventEmitter {
   constructor() { this._listeners = {}; }
@@ -30,7 +32,7 @@ export class GameState extends EventEmitter {
     this.selectedSq = null;
     this.legalDests = new Set();
     this.lastMove = null; // {from, to}
-    this.status = 'White to move';
+    this.status = t('whiteToMove');
     this.engineThinking = false;
     this.gameOver = false;
 
@@ -52,6 +54,11 @@ export class GameState extends EventEmitter {
     this.setupMode = false;
     this.setupPiece = null; // {type, color}
     this.setupTurn = 'w';
+
+    // Board setup mode (triggered by same-color double move)
+    this.boardSetupMode = false;
+    this.lastMovedPieceColor = null;
+    this.boardSetupSelectedPiece = null; // null=move mode, {type,color}=place piece
 
     // Dialogs
     this.showLoadDialog = false;
@@ -83,15 +90,16 @@ export class GameState extends EventEmitter {
 
   navigateTo(node) {
     this.currentNode = node;
-    this.chess.load(node.fen);
+    forceLoadFen(this.chess, node.fen);
     this.lastMove = node.move; // {from, to} or null
     this.selectedSq = null;
     this.legalDests = new Set();
     this.bestMoveHint = null;
     this.gameOver = false;
+    this.lastMovedPieceColor = null;
     this.checkGameOver();
     if (!this.gameOver) {
-      this.status = this.chess.turn() === 'w' ? 'White to move' : 'Black to move';
+      this.status = this.chess.turn() === 'w' ? t('whiteToMove') : t('blackToMove');
     }
     this.emit('boardChanged');
     this.emit('treeChanged');
@@ -119,24 +127,24 @@ export class GameState extends EventEmitter {
   undo() {
     this.goBack();
     if (this.currentNode.parent || this.currentNode === this.treeRoot) {
-      this.status = 'White to move \u2014 try a different move!';
+      this.status = t('whiteToMove') + ' \u2014 ' + t('tryDifferent');
       this.emit('boardChanged');
     }
   }
 
   checkGameOver() {
     if (this.chess.isCheckmate()) {
-      const winner = this.chess.turn() === 'w' ? 'Black' : 'White';
-      this.status = `Checkmate! ${winner} wins`;
+      const winner = this.chess.turn() === 'w' ? t('black') : t('white');
+      this.status = t('checkmate', { winner });
       this.gameOver = true;
     } else if (this.chess.isStalemate()) {
-      this.status = 'Stalemate \u2014 Draw';
+      this.status = t('stalemate');
       this.gameOver = true;
     } else if (this.chess.isInsufficientMaterial()) {
-      this.status = 'Draw \u2014 Insufficient material';
+      this.status = t('drawInsufficient');
       this.gameOver = true;
     } else if (this.chess.isDraw()) {
-      this.status = 'Draw';
+      this.status = t('draw');
       this.gameOver = true;
     }
     return this.gameOver;
@@ -163,7 +171,10 @@ export class GameState extends EventEmitter {
     this.legalDests = new Set();
     this.bestMoveHint = null;
     this.gameOver = false;
-    this.status = this.chess.turn() === 'w' ? 'White to move' : 'Black to move';
+    this.boardSetupMode = false;
+    this.lastMovedPieceColor = null;
+    this.boardSetupSelectedPiece = null;
+    this.status = this.chess.turn() === 'w' ? t('whiteToMove') : t('blackToMove');
     this.emit('boardChanged');
     this.emit('treeChanged');
   }
