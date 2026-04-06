@@ -84,10 +84,10 @@ document.addEventListener('keydown', (e) => {
   if (state.showSaveDialog || state.showLoadDialog) return;
   if (state.promotingFrom !== null) return;
 
-  if (e.key === 'ArrowLeft') { state.goBack(); }
-  else if (e.key === 'ArrowRight') { state.goForward(); }
-  else if (e.key === 'ArrowUp') { state.switchBranch(-1); }
-  else if (e.key === 'ArrowDown') { state.switchBranch(1); }
+  if (e.key === 'ArrowUp') { state.goBack(); }
+  else if (e.key === 'ArrowDown') { state.goForward(); }
+  else if (e.key === 'ArrowLeft') { state.switchBranch(-1); }
+  else if (e.key === 'ArrowRight') { state.switchBranch(1); }
   else if (e.key === 'u' || e.key === 'U') { state.undo(); }
   else if (e.key === 'n' || e.key === 'N') { state.newGame(); }
   else if (e.key === 'f' || e.key === 'F') { state.flipBoard(); }
