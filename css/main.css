@@ -42,7 +42,8 @@ html, body {
 #app {
   display: flex;
   height: 100vh;
-  width: 100vw;
+  width: 100%;
+  max-width: 1600px;
   margin: 0 auto;
   background: var(--bg);
   overflow: hidden;
@@ -83,7 +84,7 @@ html, body {
   color: var(--text-dim);
   user-select: none;
   width: 20px;
-  height: min(calc(100vh - 40px), calc(200vw / 3 - 24px));
+  height: min(calc(100vh - 40px), calc(min(100vw, 1600px) * 2 / 3 - 24px));
   text-align: center;
   align-items: center;
 }
@@ -100,7 +101,7 @@ html, body {
   display: grid;
   grid-template-columns: repeat(8, 1fr);
   grid-template-rows: repeat(8, 1fr);
-  --board-size: min(calc(100vh - 40px), calc(200vw / 3 - 24px));
+  --board-size: min(calc(100vh - 40px), calc(min(100vw, 1600px) * 2 / 3 - 24px));
   width: var(--board-size);
   height: var(--board-size);
 }
@@ -216,7 +217,7 @@ html, body {
 /* Panel (right side) */
 #panel, #setup-panel {
   flex: 1;
-  min-width: calc(100vw / 3);
+  min-width: calc(min(100vw, 1600px) / 3);
   background: var(--panel-bg);
   display: flex;
   flex-direction: column;
@@ -349,6 +350,8 @@ html, body {
 }
 
 .panel-btn:hover { background: var(--btn-hover); }
+.panel-btn:disabled { opacity: 0.35; cursor: default; }
+.panel-btn:disabled:hover { background: var(--btn); }
 
 .btn-half { flex: 1; }
 .btn-full { width: 100%; }

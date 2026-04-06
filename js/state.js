@@ -23,7 +23,7 @@ export class GameState extends EventEmitter {
     // Board orientation: 'w' = white on bottom, 'b' = black on bottom
     this.playerColor = 'w';
     this.versusMode = false; // 90° rotated board for 2 humans
-    this.enginePaused = false; // When true, engine won't auto-respond
+    this.enginePaused = true; // When true, engine won't auto-respond
     this.bestMoveHint = null; // {from, to, score} — shown by "Best Move" button
 
     // Selection / UI
@@ -176,6 +176,21 @@ export class GameState extends EventEmitter {
 
   flipBoard() {
     this.playerColor = this.playerColor === 'w' ? 'b' : 'w';
+    this.emit('boardFlipped');
+    this.emit('boardChanged');
+  }
+
+  rotateBoard() {
+    // Cycle: normal (w,false) → 90° (w,true) → 180° (b,false) → 270° (b,true) → normal
+    if (!this.versusMode && this.playerColor === 'w') {
+      this.versusMode = true; this.playerColor = 'w';
+    } else if (this.versusMode && this.playerColor === 'w') {
+      this.versusMode = false; this.playerColor = 'b';
+    } else if (!this.versusMode && this.playerColor === 'b') {
+      this.versusMode = true; this.playerColor = 'b';
+    } else {
+      this.versusMode = false; this.playerColor = 'w';
+    }
     this.emit('boardFlipped');
     this.emit('boardChanged');
   }

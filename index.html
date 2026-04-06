@@ -3,13 +3,148 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Branchess {&#9815;}</title>
+  <title>Branchess — Chess Study Tool with Branching Game Trees & Stockfish 18</title>
+  <meta name="description" content="Study chess games with a branching game tree. Explore opening variations, annotate moves, and analyze positions with Stockfish 18. Free browser-based chess study tool with 171 openings, Syzygy tablebases, and Lichess import.">
+  <meta name="keywords" content="chess study, chess analysis, game tree, chess openings, Stockfish, chess engine, chess variations, opening explorer, chess annotation, PGN viewer, Lichess import, endgame tablebase, chess training, chess practice">
+  <meta name="author" content="Bang Labs">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://play-branchess.bang-labs.eu/">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Branchess — Chess Study Tool with Branching Game Trees">
+  <meta property="og:description" content="Study chess games with a branching game tree. Explore opening variations, annotate moves, and analyze with Stockfish 18. Free, runs entirely in your browser.">
+  <meta property="og:site_name" content="Branchess">
+  <meta property="og:url" content="https://play-branchess.bang-labs.eu/">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Branchess — Chess Study Tool with Branching Game Trees">
+  <meta name="twitter:description" content="Study chess games with a branching game tree. Explore opening variations, annotate moves, and analyze with Stockfish 18. Free, runs entirely in your browser.">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="css/main.css">
   <link rel="stylesheet" href="css/tree.css">
   <link rel="stylesheet" href="css/dialogs.css">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Branchess",
+    "url": "https://play-branchess.bang-labs.eu/",
+    "description": "Chess study tool with branching game trees. Explore opening variations, annotate moves, and analyze positions with Stockfish 18. 171 built-in openings, Syzygy endgame tablebases, and Lichess game import.",
+    "applicationCategory": "GameApplication",
+    "operatingSystem": "Any",
+    "browserRequirements": "Requires WebAssembly support",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "EUR"
+    },
+    "creator": {
+      "@type": "Organization",
+      "name": "Bang Labs",
+      "url": "https://bang-labs.eu"
+    },
+    "featureList": [
+      "Branching game tree with full variation history",
+      "Stockfish 18 engine with adjustable strength",
+      "171 built-in chess openings with master game statistics",
+      "Syzygy endgame tablebases for positions with 7 or fewer pieces",
+      "Move annotations and notes",
+      "Lichess game import",
+      "PGN import and export",
+      "Interactive SVG game tree visualization",
+      "Setup mode for custom positions",
+      "Two-player mode"
+    ]
+  }
+  </script>
 </head>
 <body>
+<div id="help-overlay">
+  <button id="help-close" aria-label="Close">X</button>
+  <div class="help-content">
+    <div class="help-section">
+      <h2 class="help-section-title">Concept</h2>
+      <p class="help-section-sub">Chess analysis through branching exploration.</p>
+      <div class="help-grid help-grid-2x2">
+        <div class="help-card">
+          <h3>Branching game tree</h3>
+          <p>Every different move creates a new branch. Navigate freely between variations — the full history of your exploration is preserved.</p>
+        </div>
+        <div class="help-card">
+          <h3>Deterministic engine</h3>
+          <p>Same position, same response. Play a different move and Stockfish picks fresh from its top 5 — weighted by score, cached by FEN.</p>
+        </div>
+        <div class="help-card">
+          <h3>Visual tree panel</h3>
+          <p>See every explored line as a clickable, zoomable tree. Green path shows where you are. Click any node to jump there instantly.</p>
+        </div>
+        <div class="help-card">
+          <h3>Full control</h3>
+          <p>Set up any position, adjust engine strength, pause the engine to input games manually, show the best move with evaluation, or import directly from Lichess.</p>
+        </div>
+      </div>
+    </div>
+    <div class="help-section">
+      <h2 class="help-section-title">Features</h2>
+      <p class="help-section-sub">Everything you need to explore, annotate, and study the game.</p>
+      <div class="help-grid help-grid-3x3">
+        <div class="help-card">
+          <h3>Interactive board</h3>
+          <p>Click-to-move or drag-and-drop. Free piece placement for analysis. Board labels outside the squares. En passant supported for manual moves.</p>
+        </div>
+        <div class="help-card">
+          <h3>Opening book</h3>
+          <p>171 openings shown as ghost branches in the tree. Win/draw/loss stats from master games. Click any opening to jump straight to that position.</p>
+        </div>
+        <div class="help-card">
+          <h3>Move annotations</h3>
+          <p>Right-click nodes to mark moves as good (!), brilliant (!!), mistake (?), or blunder (??). Double-click to write notes. Color-coded in the tree.</p>
+        </div>
+        <div class="help-card">
+          <h3>Endgame tablebases</h3>
+          <p>Syzygy tablebases activate at 7 or fewer pieces. Perfect play — every move rated as win, draw, or loss with distance to zeroing.</p>
+        </div>
+        <div class="help-card">
+          <h3>Engine strength slider</h3>
+          <p>Stockfish 18 with adjustable Skill Level (0-20), think time, and temperature. Blue-to-red slider. Auto-responds — click a piece to interrupt.</p>
+        </div>
+        <div class="help-card">
+          <h3>Share & export</h3>
+          <p>Share positions via URL, import PGN or Lichess games, export/import Mermaid diagrams. Save full games with branches and notes locally.</p>
+        </div>
+        <div class="help-card">
+          <h3>Fullscreen tree</h3>
+          <p>Double-click to expand the game tree to full screen with a floating draggable board. Zoom with scroll wheel, pan by dragging.</p>
+        </div>
+        <div class="help-card">
+          <h3>2-player mode</h3>
+          <p>Board rotated 90 degrees for side-by-side play. Flip to swap white and black sides. Toggle between 1P and 2P modes.</p>
+        </div>
+        <div class="help-card">
+          <h3>Setup mode</h3>
+          <p>Place pieces freely to create any position. Select from the palette, toggle sides, and start playing.</p>
+        </div>
+        <div class="help-card">
+          <h3>Best move analysis</h3>
+          <p>One click to see the engine's top recommendation highlighted on the board with centipawn evaluation. Full-strength Stockfish analysis.</p>
+        </div>
+        <div class="help-card">
+          <h3>Import from Lichess</h3>
+          <p>Paste any Lichess game URL to load the full game into your tree. Type moves directly in the move list for quick game input.</p>
+        </div>
+        <div class="help-card">
+          <h3>Two themes</h3>
+          <p>Classic brown board or Bang Labs dark theme with indigo accents, themed tree colors, and fireworks on checkmate. Persists across sessions.</p>
+        </div>
+      </div>
+    </div>
+    <div class="help-footer">
+      <div class="help-footer-contact">Contact: <a href="mailto:branchess@bang-labs.eu">branchess@bang-labs.eu</a></div>
+      <div class="help-footer-actions">
+        <button id="help-theme" class="help-theme-btn">Theme: Classic</button>
+        <button id="help-reset" class="help-reset-btn">Reset site data</button>
+      </div>
+    </div>
+  </div>
+</div>
 <div id="app">
     <div id="board-wrap">
       <div id="file-labels-top" class="file-labels"></div>

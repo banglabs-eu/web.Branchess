@@ -63,6 +63,32 @@ boardWrap.addEventListener('mousedown', (e) => {
 const overlayEl = document.getElementById('overlay');
 const dialogs = new DialogManager(overlayEl, state);
 
+// Help overlay
+const helpBtn = document.getElementById('help-btn');
+const helpOverlay = document.getElementById('help-overlay');
+const helpClose = document.getElementById('help-close');
+
+helpBtn.addEventListener('click', () => helpOverlay.classList.add('active'));
+helpClose.addEventListener('click', () => helpOverlay.classList.remove('active'));
+helpOverlay.addEventListener('click', (e) => {
+  if (e.target === helpOverlay) helpOverlay.classList.remove('active');
+});
+document.getElementById('help-reset').addEventListener('click', () => {
+  if (confirm('This will delete all saved games, positions, and settings. Continue?')) {
+    localStorage.clear();
+    indexedDB.deleteDatabase('Branchess');
+    location.reload();
+  }
+});
+const helpThemeBtn = document.getElementById('help-theme');
+helpThemeBtn.addEventListener('click', () => {
+  const isBangLabs = document.documentElement.classList.toggle('theme-banglabs');
+  helpThemeBtn.textContent = isBangLabs ? 'Theme: Bang Labs' : 'Theme: Classic';
+  localStorage.setItem('branchess-theme', isBangLabs ? 'banglabs' : 'classic');
+  state.emit('treeChanged');
+  state.emit('boardChanged');
+});
+
 // Wire promotion choice back to move handler
 state.on('promotionChoice', (pieceType) => {
   moveHandler.handlePromotion(pieceType);
@@ -76,6 +102,12 @@ state.on('setupModeChanged', () => {
 
 // Keyboard shortcuts
 document.addEventListener('keydown', (e) => {
+  // Help overlay escape
+  if (e.key === 'Escape' && helpOverlay.classList.contains('active')) {
+    helpOverlay.classList.remove('active');
+    return;
+  }
+
   // Let dialogs handle their own keys
   dialogs.handleKeydown(e);
 
@@ -90,7 +122,6 @@ document.addEventListener('keydown', (e) => {
   else if (e.key === 'ArrowRight') { state.switchBranch(1); }
   else if (e.key === 'u' || e.key === 'U') { state.undo(); }
   else if (e.key === 'n' || e.key === 'N') { state.newGame(); }
-  else if (e.key === 'f' || e.key === 'F') { state.flipBoard(); }
   else if (e.key === ' ') { e.preventDefault(); moveHandler.requestEngineCalculation(); }
   else if (e.key === 'h' || e.key === 'H') {
     // Toggle legal move hints
@@ -112,12 +143,15 @@ document.addEventListener('keydown', (e) => {
     // Let Paste PGN handle it
     uiPanel._pastePGN();
   }
+  else if (e.key === '?') {
+    helpOverlay.classList.toggle('active');
+  }
 });
 
 // Restore theme
 if (localStorage.getItem('branchess-theme') === 'banglabs') {
   document.documentElement.classList.add('theme-banglabs');
-  uiPanel.themeBtn.textContent = 'Theme: Bang Labs';
+  helpThemeBtn.textContent = 'Theme: Bang Labs';
 }
 
 // Fireworks — only in Bang Labs theme
@@ -128,7 +162,7 @@ function isBangLabsTheme() {
 // Click off the board
 document.addEventListener('click', (e) => {
   if (!isBangLabsTheme()) return;
-  if (e.target.closest('#board, #panel, #setup-panel, #overlay, .panel-btn, .btn-area, .dialog')) return;
+  if (e.target.closest('#board, #panel, #setup-panel, #overlay, #help-overlay, #help-btn, .panel-btn, .btn-area, .dialog')) return;
   bang(e.clientX, e.clientY);
 });
 

@@ -167,15 +167,17 @@ export class StochasticEngine {
 
     // Use max strength for analysis
     this._send('setoption name Skill Level value 20');
+    this._send('setoption name MultiPV value 1');
     this._send(`position fen ${fen}`);
-    this._send('go movetime 1500');
+    this._send('go depth 30');
 
     const lines = await new Promise(r => {
       this._analysisResolve = r;
       this._analysisLines = [];
     });
 
-    // Restore previous skill level on next getMove call
+    // Restore settings for normal play
+    this._send('setoption name MultiPV value 5');
     this._currentStrength = null;
 
     if (!lines.length) return null;

@@ -32,6 +32,40 @@
   opacity: 1;
 }
 
+/* First-visit hint */
+.tree-hint {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: #dcdcdc;
+  font-size: 14px;
+  line-height: 1.8;
+  padding: 12px 20px;
+  border-radius: 8px;
+  text-align: center;
+  z-index: 520;
+  white-space: nowrap;
+}
+
+.tree-hint-dismiss {
+  display: block;
+  margin: 8px auto 0;
+  background: none;
+  border: 1px solid #666;
+  color: #999;
+  font-size: 11px;
+  padding: 2px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+.tree-hint-dismiss:hover {
+  color: #dcdcdc;
+  border-color: #999;
+}
+
 /* Zoom controls */
 .tree-zoom-bar {
   position: absolute;

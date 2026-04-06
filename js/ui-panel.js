@@ -11,17 +11,41 @@ export class UIPanel {
 
     state.on('boardChanged', () => this._updateStatus());
     state.on('treeChanged', () => this._updateMoveList());
+    state.on('mermaidExportConfirm', (filename) => this._doMermaidDownload(filename));
+    state.on('exportMermaid', () => this._exportMermaid());
+    state.on('loadMermaidFile', () => this._loadMermaidFile());
+    state.on('playEngineConfirm', (playerColor) => {
+      this.state.playerColor = playerColor;
+      this.state.enginePaused = false;
+      this.playEngineBtn.textContent = 'Stop Engine';
+      const engineSide = playerColor === 'w' ? 'black' : 'white';
+      this.state.status = `Engine plays ${engineSide}`;
+      this.state.emit('boardFlipped');
+      this.state.emit('boardChanged');
+      // If it's the engine's turn, trigger a move
+      if (this.state.chess.turn() !== playerColor) {
+        this.moveHandler.requestEngineCalculation();
+      }
+    });
   }
 
   _build() {
     this.container.innerHTML = '';
     this.container.classList.add('panel');
 
-    // Title
+    // Title row with help button
+    const titleRow = document.createElement('div');
+    titleRow.className = 'panel-title-row';
     const title = document.createElement('div');
     title.className = 'panel-title';
     title.textContent = 'Branchess {\u2657}';
-    this.container.appendChild(title);
+    const helpBtn = document.createElement('button');
+    helpBtn.id = 'help-btn';
+    helpBtn.className = 'help-btn';
+    helpBtn.ariaLabel = 'Help';
+    helpBtn.textContent = '?';
+    titleRow.append(title, helpBtn);
+    this.container.appendChild(titleRow);
 
     // Status
     this.statusEl = document.createElement('div');
@@ -32,6 +56,23 @@ export class UIPanel {
     this.treeContainer = document.createElement('div');
     this.treeContainer.className = 'tree-container';
     this.container.appendChild(this.treeContainer);
+
+    // Tree hints
+    if (!localStorage.getItem('branchess-hints-dismissed')) {
+      const treeHint = document.createElement('div');
+      treeHint.className = 'tree-hint';
+      const text = document.createElement('span');
+      text.innerHTML = 'Double-click tree for fullscreen<br>Right-click node to annotate<br>Double-click node to add notes';
+      const dismissBtn = document.createElement('button');
+      dismissBtn.className = 'tree-hint-dismiss';
+      dismissBtn.textContent = 'Dismiss';
+      dismissBtn.addEventListener('click', () => {
+        treeHint.remove();
+        localStorage.setItem('branchess-hints-dismissed', '1');
+      });
+      treeHint.append(text, dismissBtn);
+      this.treeContainer.appendChild(treeHint);
+    }
 
     // Branch info + move list
     this.branchInfo = document.createElement('div');
@@ -70,58 +111,49 @@ export class UIPanel {
     // --- Navigation ---
     const navSection = this._section('Navigation');
     const navRow = this._btnRow();
-    this._addBtn(navRow, '\u2190 Back', () => this.state.goBack(), 'half');
-    this._addBtn(navRow, 'Fwd \u2192', () => this.state.goForward(), 'half');
+    this.backBtn = this._addBtn(navRow, '\u2190 Back', () => this.state.goBack(), 'half');
+    this.fwdBtn = this._addBtn(navRow, 'Fwd \u2192', () => this.state.goForward(), 'half');
     navSection.appendChild(navRow);
-    this._addBtn(navSection, 'Flip Board', () => this.state.flipBoard());
     btnArea.appendChild(navSection);
 
     // --- Engine ---
     const engineSection = this._section('Engine');
     const engineRow = this._btnRow();
-    this._addBtn(engineRow, 'Engine Move', () => this.moveHandler.requestEngineCalculation(), 'half');
-    this.pauseEngineBtn = this._addBtn(engineRow, 'Pause Engine', () => {
-      this.state.enginePaused = !this.state.enginePaused;
-      this.pauseEngineBtn.textContent = this.state.enginePaused ? 'Resume Engine' : 'Pause Engine';
+    this._addBtn(engineRow, 'Force Engine Move', () => this.moveHandler.requestEngineCalculation(), 'half');
+    this.playEngineBtn = this._addBtn(engineRow, this.state.enginePaused ? 'Play Engine' : 'Stop Engine', () => {
+      if (this.state.enginePaused) {
+        this.state.emit('openPlayEngineDialog');
+      } else {
+        this.state.enginePaused = true;
+        this.playEngineBtn.textContent = 'Play Engine';
+        this.state.status = 'Engine stopped';
+        this.state.emit('boardChanged');
+      }
     }, 'half');
     engineSection.appendChild(engineRow);
     this._addBtn(engineSection, 'Best Move', () => this.moveHandler.showBestMove());
-    this.versusBtn = this._addBtn(engineSection, '2P Mode', () => {
-      this.state.toggleVersusMode();
-      this.versusBtn.textContent = this.state.versusMode ? '1P Mode' : '2P Mode';
-    });
     btnArea.appendChild(engineSection);
 
-    // --- Save & Load ---
-    const saveSection = this._section('Save & Load');
-    const savePosRow = this._btnRow();
-    this._addBtn(savePosRow, 'Save Position', () => this._openSaveDialog(), 'half');
-    this._addBtn(savePosRow, 'Load Position', () => this._openLoadDialog(), 'half');
-    saveSection.appendChild(savePosRow);
-    const saveGameRow = this._btnRow();
-    this._addBtn(saveGameRow, 'Save Game', () => this.state.emit('openSaveGameDialog'), 'half');
-    this._addBtn(saveGameRow, 'Load Game', () => this.state.emit('openLoadGameDialog'), 'half');
-    saveSection.appendChild(saveGameRow);
-    btnArea.appendChild(saveSection);
-
-    // --- Import & Export ---
-    const ioSection = this._section('Import & Export');
+    // --- Games ---
+    const gamesSection = this._section('Games');
+    const saveRow = this._btnRow();
+    this._addBtn(saveRow, 'Save', () => this.state.emit('openSaveGameDialog'), 'half');
+    this._addBtn(saveRow, 'Load', () => this.state.emit('openLoadGameDialog'), 'half');
+    gamesSection.appendChild(saveRow);
     const importRow = this._btnRow();
     this._addBtn(importRow, 'Paste PGN', () => this._pastePGN(), 'half');
     this._addBtn(importRow, 'Load Lichess', () => this._loadLichess(), 'half');
-    ioSection.appendChild(importRow);
-    this._addBtn(ioSection, 'Share Position', () => this._sharePosition());
-    const mermaidRow = this._btnRow();
-    this._addBtn(mermaidRow, 'Export Mermaid', () => this._exportMermaid(), 'half');
-    this._addBtn(mermaidRow, 'Load Mermaid', () => this._loadMermaidFile(), 'half');
-    ioSection.appendChild(mermaidRow);
-    btnArea.appendChild(ioSection);
+    gamesSection.appendChild(importRow);
+    const ioRow2 = this._btnRow();
+    this._addBtn(ioRow2, 'Share Position', () => this._sharePosition(), 'half');
+    this._addBtn(ioRow2, 'Export/Import Branchess', () => this._showMermaidMenu(), 'half');
+    gamesSection.appendChild(ioRow2);
+    btnArea.appendChild(gamesSection);
 
     // --- Board ---
     const boardSection = this._section('Board');
-    this._addBtn(boardSection, 'Setup Board', () => this._enterSetupMode());
-    this._addBtn(boardSection, 'New Game', () => this.state.newGame());
-    this.themeBtn = this._addBtn(boardSection, 'Theme: Classic', () => this._toggleTheme());
+    this._addBtn(boardSection, 'Rotate Board', () => this.state.rotateBoard());
+    this._addBtn(boardSection, 'Reset Board', () => this.state.newGame());
     btnArea.appendChild(boardSection);
 
     this.container.appendChild(btnArea);
@@ -135,7 +167,7 @@ export class UIPanel {
     // Keyboard hints
     const hints = document.createElement('div');
     hints.className = 'hints';
-    hints.textContent = 'U:undo F:flip \u2190\u2192\u2191\u2193:nav Space:engine Ctrl+V:pgn';
+    hints.textContent = 'U:undo \u2190\u2192\u2191\u2193:nav Space:engine Ctrl+V:pgn';
     this.container.appendChild(hints);
 
     this._updateStatus();
@@ -237,6 +269,13 @@ export class UIPanel {
       this.statusEl.style.color = COLOR_TEXT;
     }
     this._updateMoveList();
+    this._updateNavButtons();
+  }
+
+  _updateNavButtons() {
+    const node = this.state.currentNode;
+    this.backBtn.disabled = !node.parent;
+    this.fwdBtn.disabled = !node.children.length;
   }
 
   _updateMoveList() {
@@ -514,15 +553,27 @@ export class UIPanel {
 
     lines.push('    classDef note fill:#fffacd,stroke:#ccc,color:#333,font-size:11px');
     const mmd = lines.join('\n') + '\n' + meta.join('\n') + '\n';
+    this._pendingMermaidContent = mmd;
+    state.emit('openMermaidExportDialog');
+  }
+
+  _doMermaidDownload(filename) {
+    const mmd = this._pendingMermaidContent;
+    if (!mmd) return;
+    const name = filename.endsWith('.mmd') ? filename : filename + '.mmd';
     const blob = new Blob([mmd], { type: 'text/plain' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = 'branchess-tree.mmd';
+    a.download = name;
     a.click();
     URL.revokeObjectURL(a.href);
+    this._pendingMermaidContent = null;
+    this.state.status = `Exported: ${name}`;
+    this.state.emit('boardChanged');
+  }
 
-    state.status = 'Exported Mermaid file';
-    state.emit('boardChanged');
+  _showMermaidMenu() {
+    this.state.emit('openMermaidMenu');
   }
 
   _loadMermaidFile() {
@@ -610,14 +661,6 @@ export class UIPanel {
     state.status = 'Mermaid game loaded';
     state.emit('boardChanged');
     state.emit('treeChanged');
-  }
-
-  _toggleTheme() {
-    const isBangLabs = document.documentElement.classList.toggle('theme-banglabs');
-    this.themeBtn.textContent = isBangLabs ? 'Theme: Bang Labs' : 'Theme: Classic';
-    localStorage.setItem('branchess-theme', isBangLabs ? 'banglabs' : 'classic');
-    this.state.emit('treeChanged');
-    this.state.emit('boardChanged');
   }
 
   _enterSetupMode() {

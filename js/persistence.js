@@ -98,6 +98,9 @@ export class DialogManager {
     state.on('openLoadGameDialog', () => this._showLoadGameDialog());
     state.on('promotionNeeded', () => this._showPromotionDialog());
     state.on('promotionDone', () => this._close());
+    state.on('openMermaidExportDialog', () => this._showMermaidExportDialog());
+    state.on('openMermaidMenu', () => this._showMermaidMenu());
+    state.on('openPlayEngineDialog', () => this._showPlayEngineDialog());
   }
 
   _close() {
@@ -425,6 +428,183 @@ export class DialogManager {
 
     box.appendChild(list);
     this.overlay.appendChild(box);
+  }
+
+  // --- Play Engine Dialog ---
+  _showPlayEngineDialog() {
+    this._showOverlay();
+    this.overlay.innerHTML = '';
+    this._currentDialog = 'save';
+
+    const box = document.createElement('div');
+    box.className = 'dialog save-dialog';
+
+    const title = document.createElement('div');
+    title.className = 'dialog-title';
+    title.textContent = 'Engine plays as';
+    box.appendChild(title);
+
+    const btnRow = document.createElement('div');
+    btnRow.className = 'dialog-btn-row';
+    btnRow.style.flexDirection = 'column';
+
+    const pawn = (color) => {
+      const span = document.createElement('span');
+      span.textContent = '\u265F';
+      span.style.color = color === 'w' ? '#fff' : '#333';
+      span.style.textShadow = color === 'w' ? '0 0 2px #888' : 'none';
+      return span;
+    };
+
+    const whiteBtn = document.createElement('button');
+    whiteBtn.className = 'panel-btn btn-active';
+    whiteBtn.appendChild(pawn('w'));
+    whiteBtn.append(' White');
+    whiteBtn.addEventListener('click', () => {
+      this._close();
+      this.state.emit('playEngineConfirm', 'b');
+    });
+
+    const blackBtn = document.createElement('button');
+    blackBtn.className = 'panel-btn btn-active';
+    blackBtn.appendChild(pawn('b'));
+    blackBtn.append(' Black');
+    blackBtn.addEventListener('click', () => {
+      this._close();
+      this.state.emit('playEngineConfirm', 'w');
+    });
+
+    const randomBtn = document.createElement('button');
+    randomBtn.className = 'panel-btn btn-active';
+    randomBtn.appendChild(pawn('w'));
+    randomBtn.append('/');
+    randomBtn.appendChild(pawn('b'));
+    randomBtn.append(' Random');
+    randomBtn.addEventListener('click', () => {
+      this._close();
+      this.state.emit('playEngineConfirm', Math.random() < 0.5 ? 'w' : 'b');
+    });
+
+    const cancelBtn = document.createElement('button');
+    cancelBtn.className = 'panel-btn';
+    cancelBtn.textContent = 'Cancel';
+    cancelBtn.addEventListener('click', () => this._close());
+
+    btnRow.append(whiteBtn, blackBtn, randomBtn, cancelBtn);
+    box.appendChild(btnRow);
+    this.overlay.appendChild(box);
+  }
+
+  // --- Mermaid Menu ---
+  _showMermaidMenu() {
+    this._showOverlay();
+    this.overlay.innerHTML = '';
+    this._currentDialog = 'save';
+
+    const box = document.createElement('div');
+    box.className = 'dialog save-dialog';
+
+    const title = document.createElement('div');
+    title.className = 'dialog-title';
+    title.textContent = 'Export/Import Branchess';
+    box.appendChild(title);
+
+    const desc = document.createElement('div');
+    desc.className = 'dialog-label';
+    desc.textContent = 'Games are saved as Mermaid diagrams (.mmd) with full tree data.';
+    desc.style.marginBottom = '12px';
+    box.appendChild(desc);
+
+    const btnRow = document.createElement('div');
+    btnRow.className = 'dialog-btn-row';
+    btnRow.style.flexDirection = 'column';
+
+    const exportBtn = document.createElement('button');
+    exportBtn.className = 'panel-btn btn-active';
+    exportBtn.textContent = 'Export Mermaid';
+    exportBtn.addEventListener('click', () => {
+      this._close();
+      this.state.emit('exportMermaid');
+    });
+
+    const importBtn = document.createElement('button');
+    importBtn.className = 'panel-btn btn-active';
+    importBtn.textContent = 'Load Mermaid';
+    importBtn.addEventListener('click', () => {
+      this._close();
+      this.state.emit('loadMermaidFile');
+    });
+
+    const cancelBtn = document.createElement('button');
+    cancelBtn.className = 'panel-btn';
+    cancelBtn.textContent = 'Cancel';
+    cancelBtn.addEventListener('click', () => this._close());
+
+    btnRow.append(exportBtn, importBtn, cancelBtn);
+    box.appendChild(btnRow);
+    this.overlay.appendChild(box);
+  }
+
+  // --- Mermaid Export Dialog ---
+  _showMermaidExportDialog() {
+    this._showOverlay();
+    this.overlay.innerHTML = '';
+    this._currentDialog = 'save';
+
+    const box = document.createElement('div');
+    box.className = 'dialog save-dialog';
+
+    const title = document.createElement('div');
+    title.className = 'dialog-title';
+    title.textContent = 'Export Mermaid';
+    box.appendChild(title);
+
+    const label = document.createElement('div');
+    label.className = 'dialog-label';
+    label.textContent = 'Filename:';
+    box.appendChild(label);
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'dialog-input';
+    input.value = new Date().toISOString().slice(0, 10);
+    input.maxLength = 60;
+    box.appendChild(input);
+
+    const hint = document.createElement('div');
+    hint.className = 'dialog-label';
+    hint.style.fontSize = '11px';
+    hint.style.marginTop = '-8px';
+    hint.textContent = '.mmd extension added automatically';
+    box.appendChild(hint);
+
+    const btnRow = document.createElement('div');
+    btnRow.className = 'dialog-btn-row';
+
+    const exportBtn = document.createElement('button');
+    exportBtn.className = 'panel-btn btn-active';
+    exportBtn.textContent = 'Export';
+    exportBtn.addEventListener('click', () => {
+      const name = input.value.trim() || input.value;
+      this.state.emit('mermaidExportConfirm', name);
+      this._close();
+    });
+
+    const cancelBtn = document.createElement('button');
+    cancelBtn.className = 'panel-btn';
+    cancelBtn.textContent = 'Cancel';
+    cancelBtn.addEventListener('click', () => this._close());
+
+    btnRow.append(exportBtn, cancelBtn);
+    box.appendChild(btnRow);
+    this.overlay.appendChild(box);
+
+    input.focus();
+    input.select();
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') exportBtn.click();
+      if (e.key === 'Escape') this._close();
+    });
   }
 
   handleKeydown(e) {
