@@ -74,8 +74,8 @@ export const TREE_NODE_R = 11;
 
 // Unicode pieces
 export const UNICODE_PIECES = {
-  K: '\u2654', Q: '\u2655', R: '\u2656', B: '\u2657', N: '\u2658', P: '\u2659',
-  k: '\u265A', q: '\u265B', r: '\u265C', b: '\u265D', n: '\u265E', p: '\u265F',
+  K: '\u2654\uFE0E', Q: '\u2655\uFE0E', R: '\u2656\uFE0E', B: '\u2657\uFE0E', N: '\u2658\uFE0E', P: '\u2659\uFE0E',
+  k: '\u265A\uFE0E', q: '\u265B\uFE0E', r: '\u265C\uFE0E', b: '\u265D\uFE0E', n: '\u265E\uFE0E', p: '\u265F\uFE0E',
 };
 
 // Piece type to symbol

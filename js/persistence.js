@@ -133,8 +133,8 @@ export class DialogManager {
     row.className = 'promo-row';
     const turn = this.state.chess.turn();
     const pieces = ['q', 'r', 'b', 'n'];
-    const unicodeMap = { q: turn === 'w' ? '\u2655' : '\u265B', r: turn === 'w' ? '\u2656' : '\u265C',
-                         b: turn === 'w' ? '\u2657' : '\u265D', n: turn === 'w' ? '\u2658' : '\u265E' };
+    const unicodeMap = { q: turn === 'w' ? '\u2655\uFE0E' : '\u265B\uFE0E', r: turn === 'w' ? '\u2656\uFE0E' : '\u265C\uFE0E',
+                         b: turn === 'w' ? '\u2657\uFE0E' : '\u265D\uFE0E', n: turn === 'w' ? '\u2658\uFE0E' : '\u265E\uFE0E' };
 
     for (const p of pieces) {
       const btn = document.createElement('button');
@@ -615,7 +615,7 @@ export class DialogManager {
 
     const pawn = (color) => {
       const span = document.createElement('span');
-      span.textContent = '\u265F';
+      span.textContent = '\u265F\uFE0E';
       span.style.color = color === 'w' ? '#fff' : '#333';
       span.style.textShadow = color === 'w' ? '0 0 2px #888' : 'none';
       return span;
