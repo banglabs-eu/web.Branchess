@@ -7,6 +7,8 @@ export class BoardView {
     this.state = state;
     this.container = container;
     this.squares = [];
+    this.turnBarTop = document.getElementById('turn-bar-top');
+    this.turnBarBottom = document.getElementById('turn-bar-bottom');
     this._build();
 
     state.on('boardChanged', () => this.render());
@@ -209,6 +211,28 @@ export class BoardView {
         this.squares[idx].classList.add('highlight-legal');
       }
     }
+
+    // Turn indicator bars
+    this._updateTurnBars();
+  }
+
+  _updateTurnBars() {
+    const turn = this.state.chess.turn();
+    const flipped = this.state.playerColor === 'b';
+
+    // Top = the color at the far side, Bottom = the color at the near side
+    // Normal: top=black, bottom=white. Flipped: top=white, bottom=black.
+    const topColor = flipped ? 'w' : 'b';
+    const bottomColor = flipped ? 'b' : 'w';
+
+    const topActive = turn === topColor;
+    const bottomActive = turn === bottomColor;
+
+    this.turnBarTop.className = `turn-bar side-${topColor === 'w' ? 'white' : 'black'}${topActive ? ' active' : ''}`;
+    this.turnBarBottom.className = `turn-bar side-${bottomColor === 'w' ? 'white' : 'black'}${bottomActive ? ' active' : ''}`;
+
+    this.turnBarTop.textContent = topActive ? (topColor === 'w' ? 'White\u2019s turn' : 'Black\u2019s turn') : '';
+    this.turnBarBottom.textContent = bottomActive ? (bottomColor === 'w' ? 'White\u2019s turn' : 'Black\u2019s turn') : '';
   }
 
   getSquareElement(algebraic) {

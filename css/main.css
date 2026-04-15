@@ -244,6 +244,49 @@ html, body {
   font-weight: 600;
 }
 
+/* Turn indicator bars above/below board */
+.turn-bar {
+  margin-left: 20px;
+  width: var(--board-size);
+  height: 20px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.turn-bar.active {
+  opacity: 1;
+}
+
+.turn-bar.side-white {
+  background: #e8e0d0;
+  color: #222;
+}
+
+.turn-bar.side-black {
+  background: #222;
+  color: #ccc;
+  border: 1px solid #444;
+}
+
+.theme-banglabs .turn-bar.side-white {
+  background: #d8d0c0;
+  color: #111;
+}
+
+.theme-banglabs .turn-bar.side-black {
+  background: #151520;
+  color: #9090b0;
+  border: 1px solid #333;
+}
+
 .tree-container {
   flex: 1;
   min-height: 120px;
@@ -495,6 +538,10 @@ html, body {
 
 .board-floating .file-labels {
   font-size: 10px;
+}
+
+.board-floating .turn-bar {
+  display: none;
 }
 
 .board-floating .rank-labels {
