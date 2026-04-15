@@ -155,9 +155,8 @@ export class TreeView {
 
     el.addEventListener('wheel', (e) => {
       e.preventDefault();
-      const factor = e.deltaY < 0 ? 1.15 : 1 / 1.15;
-      this.state.treeZoom = Math.max(0.3, Math.min(6, this.state.treeZoom * factor));
-      this.render();
+      if (e.deltaY > 0) this.state.goForward();
+      else if (e.deltaY < 0) this.state.goBack();
     }, { passive: false });
   }
 

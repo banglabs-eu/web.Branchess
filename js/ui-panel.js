@@ -18,19 +18,17 @@ export class UIPanel {
     state.on('exportMermaid', () => this._exportMermaid());
     state.on('loadMermaidFile', () => this._loadMermaidFile());
     onLangChange(() => this._build());
-    state.on('playEngineConfirm', (playerColor) => {
-      this.state.playerColor = playerColor;
-      this.state.enginePaused = false;
-      this.playEngineBtn.textContent = t('stopEngine');
-      const engineSide = playerColor === 'w' ? t('black') : t('white');
-      this.state.status = `${engineSide}`;
-      this.state.emit('boardFlipped');
-      this.state.emit('boardChanged');
-      // If it's the engine's turn, trigger a move
-      if (this.state.chess.turn() !== playerColor) {
-        this.moveHandler.requestEngineCalculation();
-      }
-    });
+
+    // Save/Load menu actions
+    state.on('saveAsPGN', () => this._exportPGN());
+    state.on('saveAsURL', () => this._shareGame());
+    state.on('saveAsMermaid', () => this._exportMermaid());
+    state.on('loadAsPGN', () => this.state.emit('openLoadPGNDialog'));
+    state.on('loadAsMermaid', () => this._loadMermaidFile());
+
+    // Triggered by the Load PGN dialog
+    state.on('loadPGNText', (text) => this._importPGN(text));
+    state.on('loadLichessURL', (url) => this._loadLichessFromURL(url));
   }
 
   _build() {
@@ -114,51 +112,28 @@ export class UIPanel {
     const btnArea = document.createElement('div');
     btnArea.className = 'btn-area';
 
-    // --- Navigation ---
-    const navSection = this._section(t('nav'));
-    const navRow = this._btnRow();
-    this.backBtn = this._addBtn(navRow, t('back'), () => this.state.goBack(), 'half');
-    this.fwdBtn = this._addBtn(navRow, t('fwd'), () => this.state.goForward(), 'half');
-    navSection.appendChild(navRow);
-    btnArea.appendChild(navSection);
-
-    // --- Engine ---
+    // --- Engine (best-move only) ---
     const engineSection = this._section(t('engine'));
     const engineRow = this._btnRow();
-    this._addBtn(engineRow, t('forceEngine'), () => this.moveHandler.requestEngineCalculation(), 'half');
-    this.playEngineBtn = this._addBtn(engineRow, this.state.enginePaused ? t('playEngine') : t('stopEngine'), () => {
-      if (this.state.enginePaused) {
-        this.state.emit('openPlayEngineDialog');
-      } else {
-        this.state.enginePaused = true;
-        this.playEngineBtn.textContent = t('playEngine');
-        this.state.status = t('engineStopped');
-        this.state.emit('boardChanged');
-      }
-    }, 'half');
+    this._addBtn(engineRow, t('bestWhite'), () => this.moveHandler.showBestMove('w'), 'half');
+    this._addBtn(engineRow, t('bestBlack'), () => this.moveHandler.showBestMove('b'), 'half');
     engineSection.appendChild(engineRow);
-    this._addBtn(engineSection, t('bestMove'), () => this.moveHandler.showBestMove());
     btnArea.appendChild(engineSection);
 
-    // --- Games ---
+    // --- Save / Load ---
     const gamesSection = this._section(t('games'));
     const gamesRow = this._btnRow();
-    this._addBtn(gamesRow, t('saveLoad'), () => this.state.emit('openGamesDialog'), 'half');
-    this._addBtn(gamesRow, t('loadLichess'), () => this._loadLichess(), 'half');
+    this._addBtn(gamesRow, t('save'), () => this.state.emit('openSaveMenu'), 'half');
+    this._addBtn(gamesRow, t('load'), () => this.state.emit('openLoadMenu'), 'half');
     gamesSection.appendChild(gamesRow);
-    const ioRow2 = this._btnRow();
-    this._addBtn(ioRow2, t('shareGame'), () => this._shareGame(), 'half');
-    this._addBtn(ioRow2, t('library'), () => this.state.emit('openLibraryDialog'), 'half');
-    gamesSection.appendChild(ioRow2);
-    const ioRow3 = this._btnRow();
-    this._addBtn(ioRow3, t('exportImport'), () => this._showMermaidMenu(), 'half');
-    this._addBtn(ioRow3, t('exportPGN'), () => this._exportPGN(), 'half');
-    gamesSection.appendChild(ioRow3);
     btnArea.appendChild(gamesSection);
 
     // --- Board ---
     const boardSection = this._section(t('board'));
-    this._addBtn(boardSection, t('rotateBoard'), () => this.state.rotateBoard());
+    const boardRow = this._btnRow();
+    this._addBtn(boardRow, t('rotateBoard'), () => this.state.rotateBoard(), 'half');
+    this._addBtn(boardRow, t('setupBoard'), () => this._enterSetupMode(), 'half');
+    boardSection.appendChild(boardRow);
     this._addBtn(boardSection, t('resetBoard'), () => this.state.newGame());
     btnArea.appendChild(boardSection);
 
@@ -173,7 +148,7 @@ export class UIPanel {
     // Keyboard hints
     const hints = document.createElement('div');
     hints.className = 'hints';
-    hints.textContent = 'U:undo \u2190\u2192\u2191\u2193:nav Space:engine Ctrl+V:pgn';
+    hints.textContent = 'U:undo \u2190\u2192\u2191\u2193:nav Scroll:plies Ctrl+V:pgn';
     this.container.appendChild(hints);
 
     this._updateStatus();
@@ -279,9 +254,7 @@ export class UIPanel {
   }
 
   _updateNavButtons() {
-    const node = this.state.currentNode;
-    this.backBtn.disabled = !node.parent;
-    this.fwdBtn.disabled = !node.children.length;
+    // Back/forward buttons removed — navigation via scroll wheel and arrow keys
   }
 
   _updateMoveList() {
@@ -400,9 +373,15 @@ export class UIPanel {
     return true;
   }
 
-  async _loadLichess() {
+  async _loadLichessFromURL(url) {
     if (this.state.engineThinking) return;
-    const input = window.prompt('Paste a Lichess game or study URL:');
+    if (!url) return;
+    await this._loadLichess(url);
+  }
+
+  async _loadLichess(urlInput) {
+    if (this.state.engineThinking) return;
+    const input = urlInput || window.prompt('Paste a Lichess game or study URL:');
     if (!input) return;
 
     const trimmed = input.trim();

@@ -223,16 +223,6 @@ export class MoveHandler {
     if (!piece) return;
     const pieceColor = piece.color;
 
-    // Detect same-color double move → enter board setup mode
-    if (!state.boardSetupMode && state.lastMovedPieceColor !== null && pieceColor === state.lastMovedPieceColor) {
-      state.boardSetupMode = true;
-      state.boardSetupSelectedPiece = null;
-      state.setupTurn = state.chess.turn();
-      state.status = t('boardSetupMode');
-      state.emit('boardSetupModeChanged');
-      state.emit('boardChanged');
-    }
-
     // In board setup mode, apply move physically without tracking in tree
     if (state.boardSetupMode) {
       const board = chess.board();
@@ -438,30 +428,39 @@ export class MoveHandler {
     });
   }
 
-  async showBestMove() {
+  async showBestMove(forceColor) {
     const state = this.state;
-    if (state.engineThinking || state.gameOver) return;
-    if (!state.chess.moves().length) return;
+    if (state.engineThinking) return;
+
+    // Use current FEN but optionally override the turn to analyze for a specific color
+    let fen = state.chess.fen();
+    if (forceColor === 'w' || forceColor === 'b') {
+      const parts = fen.split(' ');
+      parts[1] = forceColor;
+      parts[3] = '-'; // en passant is only valid for the color that was to move
+      fen = parts.join(' ');
+    }
 
     state.engineThinking = true;
-    state.status = t('analyzing');
+    const colorName = forceColor === 'w' ? 'White' : forceColor === 'b' ? 'Black' : '';
+    state.status = colorName ? `Analyzing best for ${colorName}...` : t('analyzing');
     state.emit('boardChanged');
 
     try {
-      const result = await this.engine.analyze(state.chess.fen());
+      const result = await this.engine.analyze(fen);
       if (!result) {
         state.status = 'No analysis available';
       } else {
         state.bestMoveHint = { from: result.move.from, to: result.move.to };
-        // Format score
         const score = result.score;
+        const prefix = colorName ? `Best for ${colorName}` : 'Best';
         if (Math.abs(score) >= 10000) {
           const mateIn = Math.ceil((10000 - Math.abs(score % 10000)) || 1);
-          state.status = `Best: ${result.move.from}${result.move.to} — Mate in ${mateIn}`;
+          state.status = `${prefix}: ${result.move.from}${result.move.to} — Mate in ${mateIn}`;
         } else {
           const eval_ = (score / 100).toFixed(1);
           const sign = score >= 0 ? '+' : '';
-          state.status = `Best: ${result.move.from}${result.move.to} — Eval: ${sign}${eval_}`;
+          state.status = `${prefix}: ${result.move.from}${result.move.to} — Eval: ${sign}${eval_}`;
         }
       }
     } catch {

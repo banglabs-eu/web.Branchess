@@ -106,6 +106,9 @@ export class DialogManager {
     state.on('openPlayEngineDialog', () => this._showPlayEngineDialog());
     state.on('openStudyChapterDialog', (chapters, onSelect) => this._showStudyChapterDialog(chapters, onSelect));
     state.on('openLibraryDialog', () => this._showLibraryDialog());
+    state.on('openSaveMenu', () => this._showSaveMenu());
+    state.on('openLoadMenu', () => this._showLoadMenu());
+    state.on('openLoadPGNDialog', () => this._showLoadPGNDialog());
   }
 
   _close() {
@@ -860,8 +863,169 @@ export class DialogManager {
     }
   }
 
+  _showSaveMenu() {
+    const items = [
+      { label: t('savePGN'), desc: t('savePGNDesc'), event: 'saveAsPGN' },
+      { label: t('saveURL'), desc: t('saveURLDesc'), event: 'saveAsURL' },
+      { label: t('saveMermaid'), desc: t('saveMermaidDesc'), event: 'saveAsMermaid' },
+    ];
+    this._showChoiceMenu(t('saveMenuTitle'), items);
+  }
+
+  _showLoadMenu() {
+    const items = [
+      { label: t('loadLibrary'), desc: t('loadLibraryDesc'), event: 'openLibraryDialog', premium: true },
+      { label: t('loadPGN'), desc: t('loadPGNDesc'), event: 'loadAsPGN' },
+      { label: t('loadMermaid'), desc: t('loadMermaidDesc'), event: 'loadAsMermaid' },
+    ];
+    this._showChoiceMenu(t('loadMenuTitle'), items);
+  }
+
+  _showLoadPGNDialog() {
+    this._showOverlay();
+    this.overlay.innerHTML = '';
+    this._currentDialog = 'loadpgn';
+
+    const box = document.createElement('div');
+    box.className = 'dialog save-dialog';
+    box.style.minWidth = '420px';
+
+    const header = document.createElement('div');
+    header.className = 'dialog-header';
+    const titleEl = document.createElement('div');
+    titleEl.className = 'dialog-title';
+    titleEl.textContent = 'Load PGN or Lichess';
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'dialog-close';
+    closeBtn.textContent = '\u00d7';
+    closeBtn.addEventListener('click', () => this._close());
+    header.append(titleEl, closeBtn);
+    box.appendChild(header);
+
+    const hint = document.createElement('div');
+    hint.className = 'dialog-label';
+    hint.textContent = 'Paste PGN text or a Lichess game/study URL';
+    box.appendChild(hint);
+
+    const textarea = document.createElement('textarea');
+    textarea.className = 'dialog-textarea';
+    textarea.rows = 8;
+    textarea.style.fontFamily = 'monospace';
+    textarea.style.fontSize = '12px';
+    textarea.placeholder = '1. e4 e5 2. Nf3 Nc6 ...\nor\nhttps://lichess.org/study/abcd1234';
+    box.appendChild(textarea);
+
+    const fileRow = document.createElement('div');
+    fileRow.style.marginTop = '8px';
+    const fileBtn = document.createElement('button');
+    fileBtn.className = 'panel-btn';
+    fileBtn.textContent = 'Upload .pgn file';
+    fileBtn.style.width = '100%';
+    fileBtn.addEventListener('click', () => {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = '.pgn,.txt';
+      input.addEventListener('change', () => {
+        const file = input.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+          textarea.value = reader.result;
+        };
+        reader.readAsText(file);
+      });
+      input.click();
+    });
+    fileRow.appendChild(fileBtn);
+    box.appendChild(fileRow);
+
+    const btnRow = document.createElement('div');
+    btnRow.className = 'dialog-btn-row';
+    btnRow.style.marginTop = '12px';
+
+    const loadBtn = document.createElement('button');
+    loadBtn.className = 'panel-btn btn-active';
+    loadBtn.textContent = 'Load';
+    loadBtn.addEventListener('click', () => {
+      const text = textarea.value.trim();
+      if (!text) return;
+      this._close();
+      // Detect Lichess URL
+      if (/lichess\.org\//.test(text) && text.split(/\s+/).length < 3) {
+        this.state.emit('loadLichessURL', text);
+      } else {
+        this.state.emit('loadPGNText', text);
+      }
+    });
+
+    const cancelBtn = document.createElement('button');
+    cancelBtn.className = 'panel-btn';
+    cancelBtn.textContent = 'Cancel';
+    cancelBtn.addEventListener('click', () => this._close());
+
+    btnRow.append(loadBtn, cancelBtn);
+    box.appendChild(btnRow);
+
+    this.overlay.appendChild(box);
+    textarea.focus();
+  }
+
+  _showChoiceMenu(title, items) {
+    this._showOverlay();
+    this.overlay.innerHTML = '';
+    this._currentDialog = 'choice';
+
+    const box = document.createElement('div');
+    box.className = 'dialog load-dialog';
+
+    const header = document.createElement('div');
+    header.className = 'dialog-header';
+    const titleEl = document.createElement('div');
+    titleEl.className = 'dialog-title';
+    titleEl.textContent = title;
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'dialog-close';
+    closeBtn.textContent = '\u00d7';
+    closeBtn.addEventListener('click', () => this._close());
+    header.append(titleEl, closeBtn);
+    box.appendChild(header);
+
+    const list = document.createElement('div');
+    list.className = 'load-list';
+
+    for (const item of items) {
+      const el = document.createElement('div');
+      el.className = 'load-item';
+      el.style.cursor = 'pointer';
+
+      const info = document.createElement('div');
+      info.className = 'load-item-info';
+      const nameEl = document.createElement('div');
+      nameEl.className = 'load-item-name';
+      nameEl.textContent = item.label;
+      if (item.premium) {
+        nameEl.style.color = '#f0c060';
+      }
+      const descEl = document.createElement('div');
+      descEl.className = 'load-item-date';
+      descEl.textContent = item.desc;
+      info.append(nameEl, descEl);
+      el.appendChild(info);
+
+      el.addEventListener('click', () => {
+        this._close();
+        this.state.emit(item.event);
+      });
+
+      list.appendChild(el);
+    }
+
+    box.appendChild(list);
+    this.overlay.appendChild(box);
+  }
+
   handleKeydown(e) {
-    if (this._currentDialog === 'save' || this._currentDialog === 'load' || this._currentDialog === 'library') {
+    if (this._currentDialog === 'save' || this._currentDialog === 'load' || this._currentDialog === 'library' || this._currentDialog === 'choice' || this._currentDialog === 'loadpgn') {
       if (e.key === 'Escape') this._close();
     }
   }
