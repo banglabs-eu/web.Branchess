@@ -1,4 +1,4 @@
-// Side panel: buttons, status, strength slider, branch info, move list
+// Side panel: buttons, status, branch info, move list
 import { COLOR_TEXT, COLOR_TEXT_DIM, COLOR_BTN_ACTIVE } from './constants.js';
 import { GameNode } from './game-tree.js';
 import { t, onLangChange } from './i18n.js';
@@ -139,16 +139,10 @@ export class UIPanel {
 
     this.container.appendChild(btnArea);
 
-    // Strength slider
-    this.sliderArea = document.createElement('div');
-    this.sliderArea.className = 'slider-area';
-    this._buildSlider();
-    this.container.appendChild(this.sliderArea);
-
     // Keyboard hints
     const hints = document.createElement('div');
     hints.className = 'hints';
-    hints.textContent = 'U:undo \u2190\u2192\u2191\u2193:nav Scroll:plies Ctrl+V:pgn';
+    hints.textContent = 'U:undo \u2190\u2192\u2191\u2193:nav Scroll:plies Space:best Ctrl+V:pgn';
     this.container.appendChild(hints);
 
     this._updateStatus();
@@ -178,63 +172,6 @@ export class UIPanel {
     btn.addEventListener('click', onClick);
     parent.appendChild(btn);
     return btn;
-  }
-
-  _buildSlider() {
-    this.sliderArea.innerHTML = '';
-    this._updateSliderLabel();
-
-    this.slider = document.createElement('input');
-    this.slider.type = 'range';
-    this.slider.min = '0';
-    this.slider.max = '100';
-    this.slider.value = this.state.strength;
-    this.slider.className = 'strength-slider';
-
-    this.slider.addEventListener('input', () => {
-      this.state.strength = parseInt(this.slider.value);
-      this._updateSliderLabel();
-      this._updateSliderTrack();
-    });
-
-    this.sliderArea.appendChild(this.slider);
-    this._updateSliderTrack();
-  }
-
-  _updateSliderLabel() {
-    const p = this.state.strengthParams();
-    const tempStr = p.temperature > 0 ? p.temperature.toFixed(1) : 'off';
-    const text = `Skill ${p.skill}/20 | Think ${p.thinkTime}ms | Temp ${tempStr}`;
-
-    if (!this.sliderLabel) {
-      this.sliderLabel = document.createElement('div');
-      this.sliderLabel.className = 'slider-label';
-      this.sliderArea.appendChild(this.sliderLabel);
-    }
-    this.sliderLabel.textContent = text;
-  }
-
-  _updateSliderTrack() {
-    const t = this.state.strength / 100;
-    // Cool blue (low) → warm orange (mid) → hot red (high)
-    let r, g, b;
-    if (t < 0.5) {
-      const s = t * 2; // 0-1 over first half
-      r = Math.round(60 + s * 200);
-      g = Math.round(120 + s * 80);
-      b = Math.round(220 - s * 120);
-    } else {
-      const s = (t - 0.5) * 2; // 0-1 over second half
-      r = Math.round(260 - s * 30);
-      g = Math.round(200 - s * 160);
-      b = Math.round(100 - s * 70);
-    }
-    const color = `rgb(${r},${g},${b})`;
-    const pct = this.state.strength + '%';
-    this.slider.style.setProperty('--slider-color', color);
-    this.slider.style.setProperty('--val', pct);
-    // Fallback for Firefox (no ::webkit track)
-    this.slider.style.background = `linear-gradient(to right, ${color} 0%, ${color} ${pct}, #3c3a37 ${pct}, #3c3a37 100%)`;
   }
 
   _updateStatus() {

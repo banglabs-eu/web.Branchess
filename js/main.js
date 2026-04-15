@@ -173,7 +173,7 @@ document.addEventListener('keydown', (e) => {
   else if (e.key === 'ArrowRight') { state.switchBranch(1); }
   else if (e.key === 'u' || e.key === 'U') { state.undo(); }
   else if (e.key === 'n' || e.key === 'N') { state.newGame(); }
-  else if (e.key === ' ') { e.preventDefault(); moveHandler.requestEngineCalculation(); }
+  else if (e.key === ' ') { e.preventDefault(); moveHandler.showBestMove(state.chess.turn()); }
   else if (e.key === 'h' || e.key === 'H') {
     // Toggle legal move hints
     boardContainer.classList.toggle('hide-hints');
