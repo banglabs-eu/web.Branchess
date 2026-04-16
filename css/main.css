@@ -80,6 +80,8 @@ body {
   box-shadow: 0 4px 24px rgba(0,0,0,0.5);
   bottom: 16px;
   left: 16px;
+  resize: both;
+  overflow: hidden;
 }
 
 /* Moves panel snapped to board */
@@ -101,29 +103,7 @@ body {
   flex-shrink: 0;
 }
 
-/* Resize grip on board area */
-.board-resize-grip {
-  position: absolute;
-  bottom: 0;
-  right: 0;
-  width: 24px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 18px;
-  color: #999;
-  cursor: nwse-resize;
-  z-index: 800;
-  user-select: none;
-  line-height: 1;
-  background: var(--bg);
-  border-radius: 4px 0 6px 0;
-}
-.board-resize-grip:hover {
-  color: #fff;
-  background: var(--btn-active);
-}
+/* Native resize handle styling */
 
 .file-labels {
   display: grid;

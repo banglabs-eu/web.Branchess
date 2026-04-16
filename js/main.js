@@ -318,7 +318,7 @@ function makeDraggable(el, handleSelector) {
 
   el.addEventListener('mousedown', (e) => {
     if (handleSelector && !e.target.closest(handleSelector)) return;
-    if (e.target.closest('.square, .move-input, .note-area, .move-list, .board-resize-grip, .captured-cell, .captured-tray, input, textarea, button, select')) return;
+    if (e.target.closest('.square, .move-input, .note-area, .move-list, .captured-cell, .captured-tray, input, textarea, button, select')) return;
     e.preventDefault();
     dragging = true;
     const r = el.getBoundingClientRect();
@@ -346,35 +346,19 @@ const infoArea = document.getElementById('info-area');
 
 makeDraggable(boardArea);
 
-// --- Resizable board via grip ---
-const resizeGrip = document.createElement('div');
-resizeGrip.className = 'board-resize-grip';
-resizeGrip.textContent = '\u25e2';
-// Append directly to board-area (position: fixed) so it's never clipped
-boardArea.style.position = 'fixed'; // ensure positioning context
-boardArea.appendChild(resizeGrip);
-
-let resizing = false, resizeStartX, resizeStartY, resizeStartSize;
-
-resizeGrip.addEventListener('mousedown', (e) => {
-  e.preventDefault();
-  e.stopPropagation();
-  resizing = true;
-  resizeStartX = e.clientX;
-  resizeStartY = e.clientY;
-  resizeStartSize = boardContainer.getBoundingClientRect().width;
-});
-
-window.addEventListener('mousemove', (e) => {
-  if (!resizing) return;
-  const dx = e.clientX - resizeStartX;
-  const dy = e.clientY - resizeStartY;
-  const delta = (dx + dy) / 2;
-  const newSize = Math.max(80, Math.min(resizeStartSize + delta, Math.min(window.innerWidth, window.innerHeight) * 0.85));
+// --- Resizable board: sync --board-size when boardArea is CSS-resized ---
+const resizeObs = new ResizeObserver(() => {
+  const areaRect = boardArea.getBoundingClientRect();
+  // Subtract tray, buttons, info panel widths and padding from available space
+  const tray = boardArea.querySelector('.captured-tray');
+  const btnBox = boardArea.querySelector('.btn-box');
+  const usedW = (tray ? tray.offsetWidth : 0) + (btnBox ? btnBox.offsetWidth : 0) + (infoArea ? infoArea.offsetWidth : 0) + 16;
+  const availW = areaRect.width - usedW;
+  const availH = areaRect.height - 16; // padding
+  const newSize = Math.max(80, Math.min(availW, availH));
   document.documentElement.style.setProperty('--board-size', newSize + 'px');
 });
-
-window.addEventListener('mouseup', () => { resizing = false; });
+resizeObs.observe(boardArea);
 
 // Auto-enter fullscreen tree mode on load
 requestAnimationFrame(() => {
