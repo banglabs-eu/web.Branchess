@@ -275,26 +275,10 @@ if (localStorage.getItem('branchess-theme') === 'banglabs') {
   helpThemeBtn.textContent = 'Theme: Classic';
 }
 
-// Fireworks — only in Bang Labs theme
-function isBangLabsTheme() {
-  return document.documentElement.classList.contains('theme-banglabs');
-}
-
-// Click off the board
-document.addEventListener('click', (e) => {
-  if (!isBangLabsTheme()) return;
-  if (e.target.closest('#board, #panel, #tree-area, #info-area, #setup-panel, #overlay, #help-overlay, #help-btn, .panel-btn, .hamburger-menu, .dialog')) return;
-  bang(e.clientX, e.clientY);
-});
-
-// Fireworks show on winning
+// Fireworks on checkmate
 state.on('boardChanged', () => {
-  if (!isBangLabsTheme()) return;
   if (state.gameOver && state.status && state.status.includes('Checkmate')) {
-    const loserTurn = state.chess.turn();
-    if (loserTurn !== state.playerColor) {
-      fireworksShow();
-    }
+    fireworksShow();
   }
 });
 
@@ -362,7 +346,9 @@ makeDraggable(boardArea);
 const resizeGrip = document.createElement('div');
 resizeGrip.className = 'board-resize-grip';
 resizeGrip.textContent = '\u25e2';
-boardArea.appendChild(resizeGrip);
+// Append to info-area so it's at the bottom-right of the whole unit
+infoArea.style.position = 'relative';
+infoArea.appendChild(resizeGrip);
 
 let resizing = false, resizeStartX, resizeStartY, resizeStartSize;
 

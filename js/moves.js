@@ -2,6 +2,7 @@
 import { ANIM_DURATION } from './constants.js';
 import { forceLoadBoard } from './board-utils.js';
 import { t } from './i18n.js';
+import { bang } from './bang.js';
 
 export class MoveHandler {
   constructor(state, boardView, animationManager, engine) {
@@ -111,6 +112,7 @@ export class MoveHandler {
           // Dragging off the board removes the piece
           if (this._dragFromSq && !sqEl) {
             this._forceRemove(this._dragFromSq);
+            bang(e.clientX, e.clientY);
             this.state.selectedSq = null;
             this.state.legalDests = new Set();
             this.state.emit('boardChanged');
