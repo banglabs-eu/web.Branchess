@@ -83,14 +83,8 @@ export class UIPanel {
     this._menuEl = this._buildMenu();
     document.body.appendChild(this._menuEl);
 
-    // --- Info area (floating moves panel) ---
+    // --- Info area (snapped to board) ---
     this.infoAreaEl.innerHTML = '';
-
-    // Drag title bar
-    const infoTitle = document.createElement('div');
-    infoTitle.className = 'float-title';
-    infoTitle.textContent = 'Moves';
-    this.infoAreaEl.appendChild(infoTitle);
 
     const movesSection = document.createElement('div');
     movesSection.className = 'moves-section';

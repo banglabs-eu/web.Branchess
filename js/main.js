@@ -74,8 +74,8 @@ const dialogs = new DialogManager(overlayEl, state);
 const helpOverlay = document.getElementById('help-overlay');
 const helpClose = document.getElementById('help-close');
 
-// Use delegation so it survives panel rebuilds
-panelContainer.addEventListener('click', (e) => {
+// Use delegation so it survives panel rebuilds — listen on document since help-btn moves around
+document.addEventListener('click', (e) => {
   if (e.target.closest('#help-btn')) helpOverlay.classList.add('active');
 });
 helpClose.addEventListener('click', () => helpOverlay.classList.remove('active'));
@@ -353,7 +353,6 @@ const boardArea = document.getElementById('board-area');
 const infoArea = document.getElementById('info-area');
 
 makeDraggable(boardArea);
-makeDraggable(infoArea, '.float-title');
 
 // --- Resizable board via grip ---
 const resizeGrip = document.createElement('div');
