@@ -35,12 +35,29 @@ export class UIPanel {
   }
 
   _build() {
-    // --- Tree area (right half) ---
+    // --- Tree area (full background) ---
     this.treeAreaEl.innerHTML = '';
 
-    // Title row with hamburger + help
-    const titleRow = document.createElement('div');
-    titleRow.className = 'panel-title-row';
+    // Tree container
+    if (!this.treeContainer) {
+      this.treeContainer = document.createElement('div');
+      this.treeContainer.className = 'tree-container';
+    }
+    this.treeAreaEl.appendChild(this.treeContainer);
+
+    // --- Board area: piece tray (left) + board + buttons (right) ---
+    // Clear old tray/buttons if rebuilding
+    if (this.capturedEl) this.capturedEl.remove();
+    if (this._btnBox) this._btnBox.remove();
+
+    // Piece tray (vertical, left of board)
+    this.capturedEl = document.createElement('div');
+    this.capturedEl.className = 'captured-tray';
+    this.boardAreaEl.insertBefore(this.capturedEl, this.boardAreaEl.firstChild);
+
+    // Buttons box (vertical, right of board)
+    this._btnBox = document.createElement('div');
+    this._btnBox.className = 'btn-box';
 
     this._hamburgerBtn = document.createElement('button');
     this._hamburgerBtn.className = 'hamburger-btn';
@@ -50,57 +67,30 @@ export class UIPanel {
       e.stopPropagation();
       this._toggleMenu();
     });
-
-    const title = document.createElement('div');
-    title.className = 'panel-title';
-    title.textContent = 'Branchess {\u2657}';
+    this._btnBox.appendChild(this._hamburgerBtn);
 
     const helpBtn = document.createElement('button');
     helpBtn.id = 'help-btn';
     helpBtn.className = 'help-btn';
     helpBtn.ariaLabel = 'Help';
     helpBtn.textContent = '?';
+    this._btnBox.appendChild(helpBtn);
 
-    titleRow.append(this._hamburgerBtn, title, helpBtn);
-    this.treeAreaEl.appendChild(titleRow);
+    this.boardAreaEl.appendChild(this._btnBox);
 
     // Hamburger dropdown menu
     if (this._menuEl) this._menuEl.remove();
     this._menuEl = this._buildMenu();
     document.body.appendChild(this._menuEl);
 
-    // Tree container
-    if (!this.treeContainer) {
-      this.treeContainer = document.createElement('div');
-      this.treeContainer.className = 'tree-container';
-    }
-    this.treeAreaEl.appendChild(this.treeContainer);
-
-    // Tree hints
-    if (!localStorage.getItem('branchess-hints-dismissed')) {
-      const treeHint = document.createElement('div');
-      treeHint.className = 'tree-hint';
-      const text = document.createElement('span');
-      text.innerHTML = 'Double-click tree for fullscreen<br>Right-click node to annotate<br>Double-click node to add notes';
-      const dismissBtn = document.createElement('button');
-      dismissBtn.className = 'tree-hint-dismiss';
-      dismissBtn.textContent = 'Dismiss';
-      dismissBtn.addEventListener('click', () => {
-        treeHint.remove();
-        localStorage.setItem('branchess-hints-dismissed', '1');
-      });
-      treeHint.append(text, dismissBtn);
-      this.treeContainer.appendChild(treeHint);
-    }
-
-    // Piece tray (vertical, beside the board)
-    if (this.capturedEl) this.capturedEl.remove();
-    this.capturedEl = document.createElement('div');
-    this.capturedEl.className = 'captured-tray';
-    this.boardAreaEl.appendChild(this.capturedEl);
-
-    // --- Info area ---
+    // --- Info area (floating moves panel) ---
     this.infoAreaEl.innerHTML = '';
+
+    // Drag title bar
+    const infoTitle = document.createElement('div');
+    infoTitle.className = 'float-title';
+    infoTitle.textContent = 'Moves';
+    this.infoAreaEl.appendChild(infoTitle);
 
     const movesSection = document.createElement('div');
     movesSection.className = 'moves-section';

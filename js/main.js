@@ -324,88 +324,71 @@ if (hashData) {
   }
 }
 
-// --- Draggable panel swap ---
-const panels = [
-  document.getElementById('board-area'),
-  document.getElementById('tree-area'),
-  document.getElementById('info-area'),
-];
+// --- Floating draggable panels ---
+function makeDraggable(el, handleSelector) {
+  let dragging = false, startX, startY, origX, origY;
 
-// Default grid areas
-const defaultAreas = { 'board-area': 'board', 'tree-area': 'tree', 'info-area': 'info' };
-
-// Restore saved layout
-const savedLayout = localStorage.getItem('branchess-panel-layout');
-if (savedLayout) {
-  try {
-    const layout = JSON.parse(savedLayout);
-    for (const panel of panels) {
-      if (layout[panel.id]) panel.style.gridArea = layout[panel.id];
-    }
-  } catch { /* ignore */ }
-}
-
-function saveLayout() {
-  const layout = {};
-  for (const panel of panels) {
-    layout[panel.id] = panel.style.gridArea || defaultAreas[panel.id];
-  }
-  localStorage.setItem('branchess-panel-layout', JSON.stringify(layout));
-}
-
-let dragSource = null;
-
-for (const panel of panels) {
-  // Add drag handle
-  const handle = document.createElement('div');
-  handle.className = 'panel-drag-handle';
-  handle.textContent = '\u2725';
-  handle.draggable = true;
-  handle.title = 'Drag to swap panels';
-  panel.prepend(handle);
-
-  handle.addEventListener('dragstart', (e) => {
-    dragSource = panel;
-    panel.classList.add('panel-dragging');
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/plain', panel.id);
-  });
-
-  handle.addEventListener('dragend', () => {
-    panel.classList.remove('panel-dragging');
-    for (const p of panels) p.classList.remove('panel-drag-over');
-    dragSource = null;
-  });
-
-  panel.addEventListener('dragover', (e) => {
-    if (!dragSource || dragSource === panel) return;
-    // Only accept panel swaps (not piece tray drags)
-    if (!e.dataTransfer.types.includes('text/plain')) return;
+  el.addEventListener('mousedown', (e) => {
+    if (handleSelector && !e.target.closest(handleSelector)) return;
+    if (e.target.closest('.square, .move-input, .note-area, .move-list, .resize-handle, input, textarea, button, select')) return;
     e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-    panel.classList.add('panel-drag-over');
+    dragging = true;
+    const rect = el.getBoundingClientRect();
+    origX = rect.left; origY = rect.top;
+    startX = e.clientX; startY = e.clientY;
   });
 
-  panel.addEventListener('dragleave', () => {
-    panel.classList.remove('panel-drag-over');
+  window.addEventListener('mousemove', (e) => {
+    if (!dragging) return;
+    el.style.left = (origX + e.clientX - startX) + 'px';
+    el.style.top = (origY + e.clientY - startY) + 'px';
+    el.style.right = 'auto';
+    el.style.bottom = 'auto';
   });
 
-  panel.addEventListener('drop', (e) => {
-    e.preventDefault();
-    panel.classList.remove('panel-drag-over');
-    if (!dragSource || dragSource === panel) return;
-    // Don't swap if this was a piece-tray drag
-    const sourceId = e.dataTransfer.getData('text/plain');
-    if (!panels.some(p => p.id === sourceId)) return;
-
-    // Swap grid areas
-    const srcArea = dragSource.style.gridArea || defaultAreas[dragSource.id];
-    const tgtArea = panel.style.gridArea || defaultAreas[panel.id];
-    dragSource.style.gridArea = tgtArea;
-    panel.style.gridArea = srcArea;
-    saveLayout();
-  });
+  window.addEventListener('mouseup', () => { dragging = false; });
 }
+
+const boardArea = document.getElementById('board-area');
+const infoArea = document.getElementById('info-area');
+
+makeDraggable(boardArea);
+makeDraggable(infoArea, '.float-title');
+
+// --- Resizable board ---
+const resizeHandle = document.createElement('div');
+resizeHandle.className = 'resize-handle';
+boardArea.appendChild(resizeHandle);
+
+let resizing = false, resizeStartX, resizeStartY, resizeStartSize;
+
+resizeHandle.addEventListener('mousedown', (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  resizing = true;
+  resizeStartX = e.clientX;
+  resizeStartY = e.clientY;
+  resizeStartSize = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--board-size'));
+});
+
+window.addEventListener('mousemove', (e) => {
+  if (!resizing) return;
+  const dx = e.clientX - resizeStartX;
+  const dy = e.clientY - resizeStartY;
+  const delta = Math.max(dx, dy);
+  const newSize = Math.max(100, Math.min(resizeStartSize + delta, Math.min(window.innerWidth, window.innerHeight) * 0.8));
+  document.documentElement.style.setProperty('--board-size', newSize + 'px');
+});
+
+window.addEventListener('mouseup', () => { resizing = false; });
+
+// Auto-enter fullscreen tree mode on load
+requestAnimationFrame(() => {
+  treeView._fullscreen = true;
+  const treeCont = uiPanel.treeContainer;
+  treeCont.classList.add('tree-fullscreen');
+  treeView.render();
+});
 
 // Page unload
 window.addEventListener('beforeunload', () => engine.terminate());
