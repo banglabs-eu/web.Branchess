@@ -115,7 +115,10 @@ export class MoveHandler {
             if (document.documentElement.classList.contains('theme-banglabs')) {
               bang(e.clientX, e.clientY);
             }
-            this.state.positionDirty = true;
+            if (!this.state.positionDirty) {
+              this.state.positionDirty = true;
+              this.state.resetTree(this.state.chess.fen());
+            }
             this.state.status = 'Position edited \u2014 click "Position Ready" to start';
             this.state.selectedSq = null;
             this.state.legalDests = new Set();
@@ -165,7 +168,10 @@ export class MoveHandler {
       const sqEl = e.target.closest('.square');
       if (!sqEl) return;
       this._forcePut({ type: data.type, color: data.color }, sqEl.dataset.square);
-      this.state.positionDirty = true;
+      if (!this.state.positionDirty) {
+        this.state.positionDirty = true;
+        this.state.resetTree(this.state.chess.fen());
+      }
       this.state.status = 'Position edited \u2014 click "Position Ready" to start';
       this.state.emit('boardChanged');
     });
@@ -321,7 +327,11 @@ export class MoveHandler {
       state.lastMovedPieceColor = pieceColor;
       state.selectedSq = null;
       state.legalDests = new Set();
-      state.positionDirty = true;
+      if (!state.positionDirty) {
+        // First edit — clear the tree to a blank single node
+        state.positionDirty = true;
+        state.resetTree(chess.fen());
+      }
       state.status = 'Position edited \u2014 click "Position Ready" to start';
       state.emit('boardChanged');
       return;

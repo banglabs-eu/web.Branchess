@@ -388,6 +388,17 @@ export class UIPanel {
 
   _updateMoveList() {
     const state = this.state;
+
+    // During position setup, hide moves and branch info
+    if (state.positionDirty) {
+      this.branchInfo.textContent = '';
+      this.moveList.innerHTML = '';
+      this.moveList.textContent = 'Setting up position...';
+      this.moveList.classList.add('move-list-empty');
+      if (this.noteArea) this.noteArea.value = '';
+      return;
+    }
+
     const depth = state.currentNode.depth();
     const moveNum = Math.ceil(depth / 2);
     let info = `Ply ${depth}`;
