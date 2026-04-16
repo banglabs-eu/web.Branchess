@@ -333,7 +333,8 @@ function makeDraggable(el, handleSelector) {
     if (e.target.closest('.square, .move-input, .note-area, .move-list, .board-resize-grip, input, textarea, button, select')) return;
     e.preventDefault();
     dragging = true;
-    origX = rect.left; origY = rect.top;
+    const r = el.getBoundingClientRect();
+    origX = r.left; origY = r.top;
     startX = e.clientX; startY = e.clientY;
   });
 
