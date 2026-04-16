@@ -56,7 +56,7 @@ export class UIPanel {
     helpBtn.className = 'help-btn';
     helpBtn.ariaLabel = 'Help';
     helpBtn.textContent = '?';
-    titleRow.append(title, hamburgerBtn, helpBtn);
+    titleRow.append(hamburgerBtn, title, helpBtn);
 
     // Hamburger dropdown menu
     this._menuEl = this._buildMenu();
