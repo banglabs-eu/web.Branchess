@@ -15,7 +15,7 @@ export class UIPanel {
     this.moveHandler = moveHandler;
     this._build();
 
-    state.on('boardChanged', () => { this._updateStatus(); this._updateCapturedPieces(); });
+    state.on('boardChanged', () => { this._updateStatus(); this._updateCapturedPieces(); this._updateMoveList(); });
     state.on('treeChanged', () => this._updateMoveList());
     state.on('mermaidExportConfirm', (filename) => this._doMermaidDownload(filename));
     state.on('exportMermaid', () => this._exportMermaid());
@@ -105,40 +105,55 @@ export class UIPanel {
     const movesSection = document.createElement('div');
     movesSection.className = 'moves-section';
 
-    // Status (whose turn) at top of moves section
+    // Status (whose turn)
     this.statusEl = document.createElement('div');
     this.statusEl.className = 'panel-status';
     movesSection.appendChild(this.statusEl);
 
-    this.branchInfo = document.createElement('div');
-    this.branchInfo.className = 'branch-info';
-    movesSection.appendChild(this.branchInfo);
-
+    // Move list
     this.moveList = document.createElement('div');
     this.moveList.className = 'move-list';
     movesSection.appendChild(this.moveList);
 
+    // Move input (always visible)
     this.moveInput = document.createElement('input');
     this.moveInput.type = 'text';
     this.moveInput.className = 'move-input';
-    this.moveInput.placeholder = 'e.g. e4 e5 or Nf3';
-    this.moveInput.style.display = 'none';
+    this.moveInput.placeholder = 'Type moves: e4 e5 Nf3...';
     movesSection.appendChild(this.moveInput);
+
+    // Comment/note for current move
+    this.noteArea = document.createElement('textarea');
+    this.noteArea.className = 'note-area';
+    this.noteArea.placeholder = 'Add a comment for this move...';
+    this.noteArea.rows = 2;
+    movesSection.appendChild(this.noteArea);
+
+    // Branch info at bottom
+    this.branchInfo = document.createElement('div');
+    this.branchInfo.className = 'branch-info';
+    movesSection.appendChild(this.branchInfo);
 
     this.infoAreaEl.appendChild(movesSection);
 
-    this.moveList.addEventListener('dblclick', () => this._enterMoveInput());
     this.moveInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
         e.preventDefault();
-        this._playTypedMoves(this.moveInput.value.trim());
+        const val = this.moveInput.value.trim();
+        if (val) this._playTypedMoves(val);
         this.moveInput.value = '';
-      } else if (e.key === 'Escape') {
-        this._exitMoveInput();
       }
     });
-    this.moveInput.addEventListener('blur', () => this._exitMoveInput());
     this.moveInput.addEventListener('input', () => this._validateMoveInput());
+
+    // Save note on change
+    this.noteArea.addEventListener('input', () => {
+      const node = this.state.currentNode;
+      if (node) {
+        node.note = this.noteArea.value;
+        this.state.emit('treeChanged');
+      }
+    });
 
     this._updateStatus();
     this._updateCapturedPieces();
@@ -351,14 +366,14 @@ export class UIPanel {
     }
     this.branchInfo.textContent = info;
 
-    // Move list
+    // Move list with annotations
     const path = state.currentNode.pathFromRoot();
-    const moves = path.slice(1).filter(n => n.san).map(n => n.san);
+    const nodes = path.slice(1).filter(n => n.san);
     const lines = [];
-    for (let i = 0; i < moves.length; i += 2) {
+    for (let i = 0; i < nodes.length; i += 2) {
       const num = Math.floor(i / 2) + 1;
-      let line = `${num}. ${moves[i]}`;
-      if (i + 1 < moves.length) line += `  ${moves[i + 1]}`;
+      let line = `${num}. ${nodes[i].san}${nodes[i].annotation || ''}`;
+      if (i + 1 < nodes.length) line += `  ${nodes[i + 1].san}${nodes[i + 1].annotation || ''}`;
       lines.push(line);
     }
     if (lines.length) {
@@ -366,20 +381,14 @@ export class UIPanel {
       this.moveList.scrollTop = this.moveList.scrollHeight;
       this.moveList.classList.remove('move-list-empty');
     } else {
-      this.moveList.textContent = t('doubleClickMoves');
+      this.moveList.textContent = 'No moves yet';
       this.moveList.classList.add('move-list-empty');
     }
-  }
 
-  _enterMoveInput() {
-    this.moveInput.style.display = '';
-    this.moveInput.focus();
-  }
-
-  _exitMoveInput() {
-    this.moveInput.style.display = 'none';
-    this.moveInput.value = '';
-    this.moveInput.classList.remove('move-input-invalid');
+    // Update note area for current move
+    if (this.noteArea && document.activeElement !== this.noteArea) {
+      this.noteArea.value = state.currentNode.note || '';
+    }
   }
 
   _validateMoveInput() {
