@@ -101,22 +101,26 @@ html, body {
   flex-shrink: 0;
 }
 
-/* Corner resize cursor zone (visual hint via border triangles) */
-#board-area::before,
-#board-area::after {
-  content: '';
+/* Resize grip on board area */
+.board-resize-grip {
   position: absolute;
-  width: 16px;
-  height: 16px;
+  bottom: 0;
+  right: 0;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: #888;
+  cursor: nwse-resize;
   z-index: 10;
-  pointer-events: none;
-  border: 2px solid transparent;
-  opacity: 0;
-  transition: opacity 0.2s;
+  user-select: none;
+  line-height: 1;
 }
-#board-area::before { top: 0; left: 0; border-top-color: #888; border-left-color: #888; cursor: nwse-resize; }
-#board-area::after { bottom: 0; right: 0; border-bottom-color: #888; border-right-color: #888; cursor: nwse-resize; }
-#board-area:hover::before, #board-area:hover::after { opacity: 1; }
+.board-resize-grip:hover {
+  color: var(--text);
+}
 
 .file-labels {
   display: grid;

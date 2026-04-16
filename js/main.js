@@ -330,13 +330,7 @@ function makeDraggable(el, handleSelector) {
 
   el.addEventListener('mousedown', (e) => {
     if (handleSelector && !e.target.closest(handleSelector)) return;
-    if (e.target.closest('.square, .move-input, .note-area, .move-list, input, textarea, button, select')) return;
-    // Don't drag if near a corner (let resize take over)
-    const rect = el.getBoundingClientRect();
-    const cx = e.clientX, cy = e.clientY;
-    const nearL = cx - rect.left < 14, nearR = rect.right - cx < 14;
-    const nearT = cy - rect.top < 14, nearB = rect.bottom - cy < 14;
-    if ((nearL || nearR) && (nearT || nearB)) return;
+    if (e.target.closest('.square, .move-input, .note-area, .move-list, .board-resize-grip, input, textarea, button, select')) return;
     e.preventDefault();
     dragging = true;
     origX = rect.left; origY = rect.top;
@@ -360,28 +354,21 @@ const infoArea = document.getElementById('info-area');
 makeDraggable(boardArea);
 makeDraggable(infoArea, '.float-title');
 
-// --- Resizable board by dragging corners ---
+// --- Resizable board via grip ---
+const resizeGrip = document.createElement('div');
+resizeGrip.className = 'board-resize-grip';
+resizeGrip.textContent = '\u25e2';
+boardArea.appendChild(resizeGrip);
+
 let resizing = false, resizeStartX, resizeStartY, resizeStartSize;
-const EDGE = 12; // px from corner to trigger resize
 
-boardArea.addEventListener('mousedown', (e) => {
-  // Check if near any corner of the board area
-  const rect = boardArea.getBoundingClientRect();
-  const ex = e.clientX, ey = e.clientY;
-  const nearLeft = ex - rect.left < EDGE;
-  const nearRight = rect.right - ex < EDGE;
-  const nearTop = ey - rect.top < EDGE;
-  const nearBottom = rect.bottom - ey < EDGE;
-
-  if ((nearLeft || nearRight) && (nearTop || nearBottom)) {
-    e.preventDefault();
-    e.stopPropagation();
-    resizing = true;
-    resizeStartX = ex;
-    resizeStartY = ey;
-    // Get actual rendered board size from the board element
-    resizeStartSize = boardContainer.getBoundingClientRect().width;
-  }
+resizeGrip.addEventListener('mousedown', (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  resizing = true;
+  resizeStartX = e.clientX;
+  resizeStartY = e.clientY;
+  resizeStartSize = boardContainer.getBoundingClientRect().width;
 });
 
 window.addEventListener('mousemove', (e) => {
