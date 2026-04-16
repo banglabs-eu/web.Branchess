@@ -204,6 +204,7 @@ export class UIPanel {
     this._addMenuSection(menu, t('board'));
     this._addMenuItem(menu, t('rotateBoard'), 'R', () => this.state.rotateBoard());
     this._addMenuItem(menu, t('resetBoard'), 'N', () => this.state.newGame());
+    this._addMenuItem(menu, 'Clear Board', '', () => this._clearBoard());
 
     // Make menu draggable by title bar
     let dragging = false, dx, dy;
@@ -377,18 +378,38 @@ export class UIPanel {
     }
     this.branchInfo.textContent = info;
 
-    // Move list with annotations
+    // Move list with annotations — highlight current move
     const path = state.currentNode.pathFromRoot();
     const nodes = path.slice(1).filter(n => n.san);
-    const lines = [];
-    for (let i = 0; i < nodes.length; i += 2) {
-      const num = Math.floor(i / 2) + 1;
-      let line = `${num}. ${nodes[i].san}${nodes[i].annotation || ''}`;
-      if (i + 1 < nodes.length) line += `  ${nodes[i + 1].san}${nodes[i + 1].annotation || ''}`;
-      lines.push(line);
-    }
-    if (lines.length) {
-      this.moveList.textContent = lines.join('\n');
+    const currentId = state.currentNode.id;
+
+    this.moveList.innerHTML = '';
+    if (nodes.length) {
+      for (let i = 0; i < nodes.length; i += 2) {
+        const num = Math.floor(i / 2) + 1;
+        const lineEl = document.createElement('div');
+        lineEl.className = 'move-line';
+
+        const numSpan = document.createElement('span');
+        numSpan.className = 'move-num';
+        numSpan.textContent = num + '. ';
+        lineEl.appendChild(numSpan);
+
+        const w = document.createElement('span');
+        w.className = 'move-san' + (nodes[i].id === currentId ? ' move-current' : '');
+        w.textContent = nodes[i].san + (nodes[i].annotation || '');
+        lineEl.appendChild(w);
+
+        if (i + 1 < nodes.length) {
+          const spacer = document.createTextNode('  ');
+          lineEl.appendChild(spacer);
+          const b = document.createElement('span');
+          b.className = 'move-san' + (nodes[i + 1].id === currentId ? ' move-current' : '');
+          b.textContent = nodes[i + 1].san + (nodes[i + 1].annotation || '');
+          lineEl.appendChild(b);
+        }
+        this.moveList.appendChild(lineEl);
+      }
       this.moveList.scrollTop = this.moveList.scrollHeight;
       this.moveList.classList.remove('move-list-empty');
     } else {
@@ -821,5 +842,15 @@ export class UIPanel {
     this.state.selectedSq = null;
     this.state.legalDests = new Set();
     this.state.emit('setupModeChanged');
+  }
+
+  _clearBoard() {
+    const chess = this.state.chess;
+    // Remove all pieces by loading an empty board FEN
+    chess.load('8/8/8/8/8/8/8/8 w - - 0 1');
+    this.state.resetTree(chess.fen());
+    this.state.status = 'Board cleared';
+    this.state.emit('boardChanged');
+    this.state.emit('treeChanged');
   }
 }

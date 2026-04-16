@@ -104,8 +104,8 @@ body {
 /* Resize grip on board area */
 .board-resize-grip {
   position: absolute;
-  bottom: -2px;
-  right: -2px;
+  bottom: 0;
+  right: 0;
   width: 24px;
   height: 24px;
   display: flex;
@@ -114,7 +114,7 @@ body {
   font-size: 18px;
   color: #999;
   cursor: nwse-resize;
-  z-index: 700;
+  z-index: 800;
   user-select: none;
   line-height: 1;
   background: var(--bg);
@@ -400,6 +400,23 @@ body {
   padding: 2px 0;
   font-family: 'Inter', sans-serif;
   flex-shrink: 0;
+}
+
+.move-line {
+  white-space: nowrap;
+}
+.move-num {
+  color: var(--text-dim);
+  opacity: 0.6;
+}
+.move-san {
+  color: var(--text-dim);
+}
+.move-current {
+  color: var(--text);
+  background: rgba(100, 200, 255, 0.15);
+  border-radius: 2px;
+  padding: 0 2px;
 }
 
 .move-list {

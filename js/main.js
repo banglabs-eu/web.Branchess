@@ -350,9 +350,9 @@ makeDraggable(boardArea);
 const resizeGrip = document.createElement('div');
 resizeGrip.className = 'board-resize-grip';
 resizeGrip.textContent = '\u25e2';
-// Append to info-area so it's at the bottom-right of the whole unit
-infoArea.style.position = 'relative';
-infoArea.appendChild(resizeGrip);
+// Append directly to board-area (position: fixed) so it's never clipped
+boardArea.style.position = 'fixed'; // ensure positioning context
+boardArea.appendChild(resizeGrip);
 
 let resizing = false, resizeStartX, resizeStartY, resizeStartSize;
 

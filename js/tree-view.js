@@ -793,7 +793,8 @@ export class TreeView {
       label.setAttribute('font-size', fontSize + 'px');
       label.setAttribute('font-family', 'Inter, system-ui, sans-serif');
       label.setAttribute('font-weight', '600');
-      label.setAttribute('opacity', '0.85');
+      label.setAttribute('opacity', '0');
+      label.style.transition = 'opacity 0.15s';
       label.textContent = opening.name;
       const url = opening.url;
       label.addEventListener('click', (e) => {
@@ -801,6 +802,11 @@ export class TreeView {
         window.open(url, '_blank');
       });
       this.tooltipGroup.append(label);
+
+      // Show label on hover over the bounding rect
+      rect.style.cursor = 'pointer';
+      rect.addEventListener('mouseenter', () => { label.setAttribute('opacity', '0.9'); });
+      rect.addEventListener('mouseleave', () => { label.setAttribute('opacity', '0'); });
     }
   }
 
