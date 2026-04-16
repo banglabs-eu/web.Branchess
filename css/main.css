@@ -652,7 +652,7 @@ html, body {
 
 .hamburger-menu {
   position: fixed;
-  z-index: 100;
+  z-index: 700;
   background: var(--panel-bg);
   border: 1px solid #3a3a3a;
   border-radius: 8px;
