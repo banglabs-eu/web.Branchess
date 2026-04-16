@@ -75,6 +75,9 @@ export class GameState extends EventEmitter {
     // Board keyboard navigation
     this.boardFocused = false;
     this.cursorSq = null; // algebraic notation, e.g. 'e4'
+
+    // Position editing (illegal moves made, tree not tracking)
+    this.positionDirty = false;
   }
 
   fen() { return this.chess.fen(); }

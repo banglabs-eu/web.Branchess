@@ -379,6 +379,15 @@ body {
   flex-shrink: 0;
 }
 
+.pos-ready-btn {
+  width: 100%;
+  background: var(--btn-active);
+  color: #fff;
+  font-weight: 600;
+  padding: 6px 8px;
+  margin: 4px 0;
+}
+
 .move-line {
   white-space: nowrap;
 }

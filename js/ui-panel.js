@@ -95,6 +95,21 @@ export class UIPanel {
     this.statusEl.className = 'panel-status';
     movesSection.appendChild(this.statusEl);
 
+    // "Position Ready" button — shown after illegal moves / piece placement
+    this.posReadyBtn = document.createElement('button');
+    this.posReadyBtn.className = 'panel-btn pos-ready-btn';
+    this.posReadyBtn.textContent = 'Position Ready';
+    this.posReadyBtn.style.display = 'none';
+    this.posReadyBtn.addEventListener('click', () => {
+      const fen = this.state.chess.fen();
+      this.state.positionDirty = false;
+      this.state.resetTree(fen);
+      this.state.status = t('whiteToMove');
+      this.state.emit('boardChanged');
+      this.state.emit('treeChanged');
+    });
+    movesSection.appendChild(this.posReadyBtn);
+
     // Move list
     this.moveList = document.createElement('div');
     this.moveList.className = 'move-list';
@@ -357,6 +372,12 @@ export class UIPanel {
     } else {
       this.statusEl.style.color = COLOR_TEXT;
     }
+
+    // Show/hide Position Ready button
+    if (this.posReadyBtn) {
+      this.posReadyBtn.style.display = this.state.positionDirty ? '' : 'none';
+    }
+
     this._updateMoveList();
     this._updateNavButtons();
   }

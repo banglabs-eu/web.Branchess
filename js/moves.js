@@ -115,6 +115,8 @@ export class MoveHandler {
             if (document.documentElement.classList.contains('theme-banglabs')) {
               bang(e.clientX, e.clientY);
             }
+            this.state.positionDirty = true;
+            this.state.status = 'Position edited \u2014 click "Position Ready" to start';
             this.state.selectedSq = null;
             this.state.legalDests = new Set();
             this.state.emit('boardChanged');
@@ -163,6 +165,8 @@ export class MoveHandler {
       const sqEl = e.target.closest('.square');
       if (!sqEl) return;
       this._forcePut({ type: data.type, color: data.color }, sqEl.dataset.square);
+      this.state.positionDirty = true;
+      this.state.status = 'Position edited \u2014 click "Position Ready" to start';
       this.state.emit('boardChanged');
     });
   }
@@ -296,25 +300,9 @@ export class MoveHandler {
       result = chess.move(move);
       san = result.san;
     } catch {
-      // Illegal move — apply it manually (move piece, swap turn)
+      // Illegal move — just move the piece physically, don't record in tree
       const piece = chess.get(move.from);
       if (!piece) return;
-
-      const fromFile = move.from.charCodeAt(0) - 97;
-      const fromRank = parseInt(move.from[1]);
-      const toFile = move.to.charCodeAt(0) - 97;
-      const toRank = parseInt(move.to[1]);
-
-      // En passant capture: pawn moves diagonally to empty square
-      const isEpCapture = piece.type === 'p'
-        && fromFile !== toFile
-        && !chess.get(move.to);
-      if (isEpCapture) {
-        // Remove the captured pawn on the same rank as the moving pawn
-        const capturedSq = move.to[0] + fromRank;
-        chess.remove(capturedSq);
-      }
-
       chess.remove(move.from);
       chess.remove(move.to);
       const placed = move.promotion
@@ -322,22 +310,21 @@ export class MoveHandler {
         : piece;
       chess.put(placed, move.to);
 
-      // Swap turn by loading the modified FEN with flipped side
+      // Swap turn
       const fen = chess.fen();
       const parts = fen.split(' ');
       parts[1] = parts[1] === 'w' ? 'b' : 'w';
+      parts[3] = '-';
+      chess.load(parts.join(' '), { skipValidation: true });
 
-      // Set en passant square if pawn moved two ranks
-      if (piece.type === 'p' && Math.abs(toRank - fromRank) === 2 && fromFile === toFile) {
-        const epRank = piece.color === 'w' ? fromRank + 1 : fromRank - 1;
-        parts[3] = move.from[0] + epRank;
-      } else {
-        parts[3] = '-';
-      }
-
-      chess.load(parts.join(' '));
-      san = `${piece.type.toUpperCase()}${move.from}-${move.to}`;
-      if (piece.type === 'p') san = `${move.from}-${move.to}`;
+      state.lastMove = { from: move.from, to: move.to };
+      state.lastMovedPieceColor = pieceColor;
+      state.selectedSq = null;
+      state.legalDests = new Set();
+      state.positionDirty = true;
+      state.status = 'Position edited \u2014 click "Position Ready" to start';
+      state.emit('boardChanged');
+      return;
     }
 
     const child = state.currentNode.addChild(
