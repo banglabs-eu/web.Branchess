@@ -1,6 +1,6 @@
 // SVG-based game tree visualization
 // Ported from Branchess.py lines 860-986
-import { TREE_SPACING_X, TREE_SPACING_Y, TREE_NODE_R, treeColors } from './constants.js';
+import { TREE_SPACING_X, TREE_SPACING_Y, TREE_NODE_R, STARTING_FEN, treeColors } from './constants.js';
 import { OPENINGS } from './openings.js';
 import { isTablebasePosition, queryTablebase, categoryLabel, categoryColor } from './tablebase.js';
 
@@ -737,6 +737,8 @@ export class TreeView {
   }
 
   _drawOpenings(root, layout, toPx, r, zoom, areaW, areaH) {
+    // Only show openings if game started from standard position
+    if (root.fen !== STARTING_FEN) return;
     const matches = this._detectOpenings(root);
 
     for (const match of matches) {
@@ -811,6 +813,10 @@ export class TreeView {
   }
 
   _buildGhostTree(currentNode) {
+    // Only show openings if the game started from the standard position
+    const root = currentNode.pathFromRoot()[0];
+    if (root.fen !== STARTING_FEN) return null;
+
     // Build a virtual tree of all opening continuations from the current position
     const pathSans = currentNode.pathFromRoot().slice(1).map(n => n.san);
 
