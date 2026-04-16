@@ -69,7 +69,7 @@ export function treeColors() {
 // Layout
 export const ANIM_DURATION = 180; // ms
 export const TREE_SPACING_X = 80;
-export const TREE_SPACING_Y = 48;
+export const TREE_SPACING_Y = 72;
 export const TREE_NODE_R = 11;
 
 // Unicode pieces

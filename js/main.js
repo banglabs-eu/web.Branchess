@@ -76,12 +76,12 @@ const helpClose = document.getElementById('help-close');
 
 // Use delegation so it survives panel rebuilds — listen on document since help-btn moves around
 document.addEventListener('click', (e) => {
-  if (e.target.closest('#help-btn')) helpOverlay.classList.add('active');
+  if (e.target.closest('#help-btn')) helpOverlay.classList.toggle('active');
 });
 helpClose.addEventListener('click', () => helpOverlay.classList.remove('active'));
-helpOverlay.addEventListener('click', (e) => {
-  if (e.target === helpOverlay) helpOverlay.classList.remove('active');
-});
+
+// Make help panel draggable
+makeDraggable(helpOverlay);
 document.getElementById('help-reset').addEventListener('click', () => {
   if (confirm('This will delete all saved games, positions, and settings. Continue?')) {
     localStorage.clear();

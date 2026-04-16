@@ -608,7 +608,7 @@ export class TreeView {
         hit.style.cursor = 'pointer';
 
         // Tooltip elements (hidden until hover) — multiline
-        const fontSize = Math.max(10, 12 * zoom);
+        const fontSize = Math.max(11, 14 * zoom);
         const lineH = fontSize * 1.4;
         const pad = 6;
         const maxCharsPerLine = 30;
@@ -685,7 +685,7 @@ export class TreeView {
           text.setAttribute('y', npy + r + Math.max(10, 14 * zoom));
           text.setAttribute('text-anchor', 'middle');
           text.setAttribute('fill', annoColor || (onPath ? tc.LABEL : tc.LABEL_DIM));
-          text.setAttribute('font-size', Math.max(9, 12 * zoom) + 'px');
+          text.setAttribute('font-size', Math.max(11, 15 * zoom) + 'px');
           text.setAttribute('font-family', 'system-ui, sans-serif');
           text.textContent = n.san + (n.annotation || '');
           this.labelsGroup.append(text);
@@ -780,20 +780,20 @@ export class TreeView {
       rect.setAttribute('stroke-dasharray', '4,3');
       this.openingsGroup.append(rect);
 
-      // Draw opening name label (clickable, rotated 45°)
-      const fontSize = Math.max(9, 12 * zoom);
-      const lx = minX + 4;
-      const ly = maxY + fontSize + 4;
+      // Draw opening name label (above the bounding box)
+      const fontSize = Math.max(11, 15 * zoom);
+      const lx = (minX + maxX) / 2;
+      const ly = minY - 6;
       const label = document.createElementNS(SVG_NS, 'text');
       label.classList.add('opening-label');
       label.setAttribute('x', lx);
       label.setAttribute('y', ly);
+      label.setAttribute('text-anchor', 'middle');
       label.setAttribute('fill', '#8cbf78');
       label.setAttribute('font-size', fontSize + 'px');
       label.setAttribute('font-family', 'Inter, system-ui, sans-serif');
       label.setAttribute('font-weight', '600');
-      label.setAttribute('opacity', '0.8');
-      label.setAttribute('transform', `rotate(45, ${lx}, ${ly})`);
+      label.setAttribute('opacity', '0.85');
       label.textContent = opening.name;
       const url = opening.url;
       label.addEventListener('click', (e) => {
@@ -853,7 +853,7 @@ export class TreeView {
     if (!curPos) return;
     const [cx, cy] = toPx(curPos.x, curPos.y);
 
-    const fontSize = Math.max(10, 13 * zoom);
+    const fontSize = Math.max(11, 15 * zoom);
     const ghostR = Math.max(2, r - 2);
     const sx = TREE_SPACING_X * zoom;
 
@@ -1076,7 +1076,7 @@ export class TreeView {
     if (!curPos) return;
     const [cx, cy] = toPx(curPos.x, curPos.y);
 
-    const fontSize = Math.max(10, 13 * zoom);
+    const fontSize = Math.max(11, 15 * zoom);
     const ghostR = Math.max(2, r - 2);
     const sx = TREE_SPACING_X * zoom;
 
@@ -1182,7 +1182,7 @@ export class TreeView {
   }
 
   _drawTablebaseStatus(cx, cy, r, zoom, tbData) {
-    const fontSize = Math.max(9, 11 * zoom);
+    const fontSize = Math.max(11, 14 * zoom);
     const color = categoryColor(tbData.category);
     const label = document.createElementNS(SVG_NS, 'text');
     label.setAttribute('x', cx);
