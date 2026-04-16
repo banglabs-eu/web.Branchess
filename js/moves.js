@@ -145,6 +145,22 @@ export class MoveHandler {
       if (!sqEl) return;
       this._handleSetupRightClick(sqEl.dataset.square);
     });
+
+    // Drop piece from tray onto board
+    container.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'copy';
+    });
+    container.addEventListener('drop', (e) => {
+      e.preventDefault();
+      let data;
+      try { data = JSON.parse(e.dataTransfer.getData('text/plain')); } catch { return; }
+      if (!data || !data.type || !data.color) return;
+      const sqEl = e.target.closest('.square');
+      if (!sqEl) return;
+      this._forcePut({ type: data.type, color: data.color }, sqEl.dataset.square);
+      this.state.emit('boardChanged');
+    });
   }
 
   _handleBoardClick(sq) {

@@ -177,7 +177,6 @@ export class UIPanel {
     // Board section
     this._addMenuSection(menu, t('board'));
     this._addMenuItem(menu, t('rotateBoard'), 'R', () => this.state.rotateBoard());
-    this._addMenuItem(menu, t('setupBoard'), 'E', () => this._enterSetupMode());
     this._addMenuItem(menu, t('resetBoard'), 'N', () => this.state.newGame());
 
     // Stop clicks inside menu from propagating to the close handler
@@ -254,39 +253,41 @@ export class UIPanel {
       }
     }
 
-    // Starting material
-    const start = { k: 1, q: 1, r: 2, b: 2, n: 2, p: 8 };
-    const types = ['q', 'r', 'b', 'n', 'p'];
+    const types = ['k', 'q', 'r', 'b', 'n', 'p'];
 
-    // Build row for each color (pieces captured FROM that color)
-    for (const color of ['b', 'w']) {
+    // Show all pieces for each color, always visible, with count on board
+    for (const color of ['w', 'b']) {
       const row = document.createElement('div');
       row.className = 'captured-row';
 
-      let hasCaptures = false;
-      for (const t of types) {
-        const taken = Math.max(0, start[t] - onBoard[color][t]);
-        if (taken === 0) continue;
-        hasCaptures = true;
+      for (const pt of types) {
+        const count = onBoard[color][pt];
 
         const cell = document.createElement('div');
         cell.className = 'captured-cell';
+        cell.draggable = true;
+        cell.dataset.pieceType = pt;
+        cell.dataset.pieceColor = color;
+
+        // Drag start: store piece info for drop on board
+        cell.addEventListener('dragstart', (e) => {
+          e.dataTransfer.setData('text/plain', JSON.stringify({ type: pt, color }));
+          e.dataTransfer.effectAllowed = 'copy';
+        });
 
         const icon = document.createElement('span');
         icon.className = 'captured-piece ' + (color === 'w' ? 'piece-white' : 'piece-black');
-        icon.textContent = UNICODE_PIECES[t];
+        icon.textContent = UNICODE_PIECES[pt];
 
-        const count = document.createElement('span');
-        count.className = 'captured-count';
-        count.textContent = taken;
+        const countEl = document.createElement('span');
+        countEl.className = 'captured-count';
+        countEl.textContent = count;
 
-        cell.append(icon, count);
+        cell.append(icon, countEl);
         row.appendChild(cell);
       }
 
-      if (hasCaptures) {
-        this.capturedEl.appendChild(row);
-      }
+      this.capturedEl.appendChild(row);
     }
   }
 
