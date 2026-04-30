@@ -289,7 +289,7 @@ body {
 }
 
 .panel-status {
-  font-size: 0.85rem;
+  font-size: clamp(11px, 0.75rem, 14px);
   padding: 2px 0;
   font-weight: 600;
   display: flex;
@@ -372,7 +372,7 @@ body {
 }
 
 .branch-info {
-  font-size: 0.75rem;
+  font-size: clamp(10px, 0.7rem, 12px);
   color: var(--text-dim);
   padding: 2px 0;
   font-family: 'Inter', sans-serif;
@@ -406,7 +406,7 @@ body {
 }
 
 .move-list {
-  font-size: 0.9rem;
+  font-size: clamp(12px, 0.85rem, 15px);
   color: var(--text-dim);
   padding: 2px 0;
   font-family: 'JetBrains Mono', monospace;
@@ -427,7 +427,7 @@ body {
   width: 100%;
   margin: 0;
   padding: 3px 4px;
-  font-size: 0.85rem;
+  font-size: clamp(11px, 0.75rem, 14px);
   font-family: 'JetBrains Mono', monospace;
   background: #1a1a1a;
   color: var(--text);
@@ -450,7 +450,7 @@ body {
   width: 100%;
   margin: 0;
   padding: 3px 4px;
-  font-size: 0.85rem;
+  font-size: clamp(11px, 0.75rem, 14px);
   font-family: 'Inter', sans-serif;
   background: #1a1a1a;
   color: var(--text);
@@ -508,7 +508,7 @@ body {
   border: none;
   border-radius: 6px;
   padding: 6px 8px;
-  font-size: 0.85rem;
+  font-size: clamp(11px, 0.75rem, 14px);
   font-family: 'Inter', sans-serif;
   cursor: pointer;
   transition: background 0.15s;
@@ -674,7 +674,7 @@ body {
   padding: 4px 10px;
   cursor: move;
   user-select: none;
-  font-size: 0.8rem;
+  font-size: clamp(11px, 0.7rem, 13px);
   font-weight: 600;
   color: var(--text-dim);
   border-bottom: 1px solid #3a3a3a;
@@ -694,7 +694,7 @@ body {
 }
 
 .menu-section-title {
-  font-size: 0.7rem;
+  font-size: clamp(10px, 0.65rem, 12px);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -708,7 +708,7 @@ body {
   justify-content: space-between;
   padding: 7px 14px;
   cursor: pointer;
-  font-size: 0.9rem;
+  font-size: clamp(12px, 0.8rem, 14px);
   font-family: 'Inter', sans-serif;
   color: var(--text);
   transition: background 0.12s;
@@ -716,7 +716,7 @@ body {
 .menu-item:hover { background: var(--btn-hover); }
 
 .menu-shortcut {
-  font-size: 0.75rem;
+  font-size: clamp(10px, 0.7rem, 12px);
   font-family: 'JetBrains Mono', monospace;
   color: var(--text-dim);
   margin-left: 16px;
@@ -872,4 +872,50 @@ body {
 @media (max-width: 700px) {
   #app { --board-size: min(50vw, 30vh); }
   #info-area { width: 200px; height: 250px; }
+}
+
+/* Small-screen warning — hidden by default, shown only on narrow viewports */
+#small-screen-overlay { display: none; }
+
+@media (max-width: 820px), (max-height: 520px) {
+  #small-screen-overlay {
+    display: flex;
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: var(--body-bg, #1a3a2a);
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    text-align: center;
+  }
+  #small-screen-overlay.dismissed { display: none; }
+  .small-screen-content {
+    max-width: 360px;
+    color: var(--text, #dcdcdc);
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+  .small-screen-title {
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    letter-spacing: 0.5px;
+  }
+  .small-screen-msg {
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--text-dim, #969696);
+    margin-bottom: 20px;
+  }
+  #small-screen-dismiss {
+    background: var(--btn, #505050);
+    color: var(--btn-text, #e6e6e6);
+    border: none;
+    border-radius: 6px;
+    padding: 8px 14px;
+    font-size: 13px;
+    font-family: 'Inter', sans-serif;
+    cursor: pointer;
+  }
+  #small-screen-dismiss:hover { background: var(--btn-hover, #646464); }
 }

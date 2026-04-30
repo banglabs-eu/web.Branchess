@@ -14,6 +14,15 @@ import { bang, fireworksShow } from './bang.js';
 import { LANGUAGES, getLang, setLang, onLangChange, t } from './i18n.js';
 import { decodeGameFromHash, loadStudy } from './sharing.js';
 
+// Small-screen warning dismiss
+const smallScreenOverlay = document.getElementById('small-screen-overlay');
+const smallScreenDismiss = document.getElementById('small-screen-dismiss');
+if (smallScreenDismiss && smallScreenOverlay) {
+  smallScreenDismiss.addEventListener('click', () => {
+    smallScreenOverlay.classList.add('dismissed');
+  });
+}
+
 // Initialize — load FEN from URL if present
 const chess = new Chess();
 const urlParams = new URLSearchParams(window.location.search);
